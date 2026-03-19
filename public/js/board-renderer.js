@@ -808,26 +808,55 @@ const BoardRenderer = {
         }
       }
     } else {
-      // Empty slot
+      // Empty slot — colored by allowed industry type(s)
       const allowed = slot.allowed;
       const isDual = allowed.length > 1;
+      const dimColors = {
+        cottonMill: '#8b7a5544', // dim wool/beige
+        coalMine:   '#55555544', // dim grey
+        ironWorks:  '#d4740e44', // dim orange
+        port:       '#2196F344', // dim blue
+        shipyard:   '#6d432a44'  // dim brown
+      };
 
-      this.createAndAppend('rect', {
-        x: cx - half, y: cy - half,
-        width: size, height: size,
-        rx: 2,
-        fill: isDual ? '#ffffff33' : '#ffffff18',
-        stroke: '#8b735555', 'stroke-width': 0.8,
-        'stroke-dasharray': '2,1.5',
-        'data-location': locId, 'data-slot': index,
-        class: 'board-slot empty'
-      });
+      if (isDual) {
+        // Diagonal split: top-left triangle = first type, bottom-right = second type
+        const x1 = cx - half, y1 = cy - half;
+        const x2 = cx + half, y2 = cy + half;
+        // Clip paths via polygons
+        this.createAndAppend('polygon', {
+          points: x1+','+y1 + ' ' + x2+','+y1 + ' ' + x1+','+y2,
+          fill: dimColors[allowed[0]] || '#ffffff22'
+        });
+        this.createAndAppend('polygon', {
+          points: x2+','+y1 + ' ' + x2+','+y2 + ' ' + x1+','+y2,
+          fill: dimColors[allowed[1]] || '#ffffff22'
+        });
+        // Border
+        this.createAndAppend('rect', {
+          x: cx - half, y: cy - half, width: size, height: size, rx: 2,
+          fill: 'none', stroke: '#8b735566', 'stroke-width': 0.8,
+          'data-location': locId, 'data-slot': index, class: 'board-slot empty'
+        });
+        // Diagonal line
+        this.createAndAppend('line', {
+          x1: x2, y1: y1, x2: x1, y2: y2,
+          stroke: '#8b735566', 'stroke-width': 0.5
+        });
+      } else {
+        this.createAndAppend('rect', {
+          x: cx - half, y: cy - half, width: size, height: size, rx: 2,
+          fill: dimColors[allowed[0]] || '#ffffff18',
+          stroke: '#8b735566', 'stroke-width': 0.8,
+          'data-location': locId, 'data-slot': index, class: 'board-slot empty'
+        });
+      }
 
       this.createAndAppend('text', {
         x: cx, y: cy + 2.5,
         'text-anchor': 'middle',
         'font-size': isDual ? '5' : '6',
-        fill: '#8b7355aa',
+        fill: '#ffffff88',
         'pointer-events': 'none'
       }).textContent = allowed.map(t => BOARD.industryIcons[t] || '?').join('/');
     }
