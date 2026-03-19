@@ -830,7 +830,7 @@ const BoardRenderer = {
       const allowed = slot.allowed;
       const isDual = allowed.length > 1;
       const dimColors = {
-        cottonMill: '#8b7a5544', // dim wool/beige
+        cottonMill: '#e8e0d033', // dim whitish cotton
         coalMine:   '#33333366', // dim dark grey
         ironWorks:  '#d4740e44', // dim orange
         port:       '#2196F344', // dim blue
