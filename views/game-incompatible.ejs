@@ -10,8 +10,13 @@
   <nav class="navbar">
     <a href="/lobby" class="nav-brand">Brass: Lancashire</a>
     <div class="nav-links">
+      <a href="/lobby" class="nav-link">Lobby</a>
       <a href="/wiki" class="nav-link">Wiki</a>
-      <span class="nav-user"><%= user.username %></span>
+      <a href="/profile" class="nav-link">Stats</a>
+      <a href="/account" class="nav-user"><%= user.username %></a>
+      <form method="POST" action="/logout" style="display:inline">
+        <button type="submit" class="btn btn-sm">Logout</button>
+      </form>
     </div>
   </nav>
   <main class="container">

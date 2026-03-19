@@ -22,6 +22,8 @@ router.post('/login', async (req, res) => {
 
   req.session.user = { id: user.id, username: user.username };
 
+  db.updateUserLoginStats(user.id);
+
   if (req.body.remember) {
     req.session.cookie.maxAge = 365 * 24 * 60 * 60 * 1000;
   } else {

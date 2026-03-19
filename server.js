@@ -40,11 +40,13 @@ const lobbyRoutes = require('./routes/lobby-routes');
 const gameRoutes = require('./routes/game-routes');
 const wikiRoutes = require('./routes/wiki-routes');
 const profileRoutes = require('./routes/profile-routes');
+const accountRoutes = require('./routes/account-routes');
 
 app.use('/', authRoutes);
 app.use('/', lobbyRoutes);
 app.use('/', gameRoutes);
 app.use('/', profileRoutes);
+app.use('/', accountRoutes);
 app.use('/wiki', wikiRoutes);
 
 // Home redirect
