@@ -706,15 +706,16 @@ const GameUI = {
 
     const cardsHTML = myPlayer.hand.map(c => this.renderCardHTML(c)).join('');
 
+    const floatCheck = '<label class="float-check"><input type="checkbox" ' + (this.handDetached ? 'checked' : '') + ' onchange="GameUI.toggleDetachHand()"> Float</label>';
+
     if (this.handDetached) {
-      // Show in floating panel
-      panel.innerHTML = '<h4 class="collapsible-header" onclick="GameUI.toggleDetachHand()">Hand (' + myPlayer.hand.length + ') <span class="muted" style="font-size:8px">floating</span></h4>';
+      panel.innerHTML = '<h4 class="collapsible-header" onclick="GameUI.toggleHand()">Hand (' + myPlayer.hand.length + ') ' + floatCheck + '</h4>';
       if (floatCards) floatCards.innerHTML = cardsHTML;
     } else {
       const arrow = this.handCollapsed ? '&#9654;' : '&#9660;';
       panel.innerHTML = '<h4 class="collapsible-header" onclick="GameUI.toggleHand()">'
-        + 'Hand (' + myPlayer.hand.length + ') <span class="collapse-arrow">' + arrow + '</span>'
-        + ' <span class="muted" style="font-size:8px;cursor:pointer;margin-left:4px" onclick="event.stopPropagation();GameUI.toggleDetachHand()">float</span>'
+        + 'Hand (' + myPlayer.hand.length + ') <span class="collapse-arrow">' + arrow + '</span> '
+        + floatCheck
         + '</h4>'
         + (this.handCollapsed ? '' : '<div class="hand-cards">' + cardsHTML + '</div>');
       if (floatCards) floatCards.innerHTML = '';

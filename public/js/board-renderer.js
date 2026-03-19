@@ -5,6 +5,7 @@ const BoardRenderer = {
   svg: null,
   mapImage: null,
   editMode: false,
+  resizeMode: false,
   showLinks: true,
   dragging: null,
   dragOffset: { x: 0, y: 0 },
@@ -24,6 +25,7 @@ const BoardRenderer = {
     this.svg.addEventListener('mousemove', (e) => this.onDragMove(e));
     this.svg.addEventListener('mouseup', () => this.onDragEnd());
     this.svg.addEventListener('mouseleave', () => this.onDragEnd());
+    this.svg.addEventListener('wheel', (e) => this.onWheel(e), { passive: false });
 
     this.render();
   },
@@ -83,6 +85,73 @@ const BoardRenderer = {
     const btn = document.getElementById('toggle-links-btn');
     if (btn) btn.textContent = this.showLinks ? 'Links' : 'No Links';
     this.render();
+  },
+
+  toggleResizeMode() {
+    this.resizeMode = !this.resizeMode;
+    const btn = document.getElementById('resize-nodes-btn');
+    const resetBtn = document.getElementById('reset-nodes-btn');
+    if (this.resizeMode) {
+      btn.textContent = 'Done Resize';
+      btn.classList.add('btn-primary');
+      resetBtn.style.display = '';
+    } else {
+      btn.textContent = 'Resize';
+      btn.classList.remove('btn-primary');
+      if (!this.editMode) resetBtn.style.display = 'none';
+      this.savePositions();
+    }
+  },
+
+  getScale(id) {
+    const pos = this.customPositions[id];
+    return (pos && pos.scale) || 1;
+  },
+
+  onWheel(e) {
+    if (!this.resizeMode) return;
+    // Find which panel the wheel is over
+    const target = e.target.closest('[data-location]') || e.target;
+    // Check all draggable panel backgrounds
+    const pt = this.svgPoint(e);
+    const panelId = this.findPanelAt(pt);
+    if (!panelId) return;
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const currentScale = this.getScale(panelId);
+    const newScale = Math.max(0.4, Math.min(3, currentScale + delta));
+    if (!this.customPositions[panelId]) {
+      const def = this.marketDefaults[panelId] || BOARD.locations[panelId] || BOARD.nonBuildable[panelId] || { x: 100, y: 100 };
+      this.customPositions[panelId] = { x: def.x, y: def.y, scale: newScale };
+    } else {
+      this.customPositions[panelId].scale = newScale;
+    }
+    this.render();
+    clearTimeout(this.saveTimeout);
+    this.saveTimeout = setTimeout(() => this.savePositions(), 1500);
+  },
+
+  findPanelAt(pt) {
+    // Check market panels
+    for (const id of Object.keys(this.marketDefaults)) {
+      const pos = this.getMarketPos(id);
+      const s = this.getScale(id);
+      // Rough hit test: within 40px scaled
+      if (Math.abs(pt.x - pos.x) < 40 * s && Math.abs(pt.y - pos.y) < 60 * s) return id;
+    }
+    // Check locations
+    for (const id of Object.keys(BOARD.locations)) {
+      const loc = BOARD.locations[id];
+      const s = this.getScale(id);
+      if (Math.abs(pt.x - loc.x) < 25 * s && Math.abs(pt.y - loc.y) < 25 * s) return id;
+    }
+    // Check non-buildable
+    for (const id of Object.keys(BOARD.nonBuildable)) {
+      const wp = BOARD.nonBuildable[id];
+      const s = this.getScale(id);
+      if (Math.abs(pt.x - wp.x) < 15 * s && Math.abs(pt.y - wp.y) < 15 * s) return id;
+    }
+    return null;
   },
 
   drawLinks() {
@@ -215,6 +284,7 @@ const BoardRenderer = {
 
   drawDemandPanel(state) {
     const pos = this.getMarketPos('demandPanel');
+    this.beginScaledGroup('demandPanel', pos.x, pos.y);
     const demand = state.distantMarketDemand;
     const w = 24, h = 180;
 
@@ -256,10 +326,12 @@ const BoardRenderer = {
       'text-anchor': 'middle', 'font-size': '7', fill: '#fff',
       'font-weight': 'bold', 'pointer-events': 'none'
     }).textContent = demand;
+    this.endScaledGroup();
   },
 
   drawResourcePanel(panelId, label, cubes, cubeColor, textColor, slotPrices) {
     const pos = this.getMarketPos(panelId);
+    this.beginScaledGroup(panelId, pos.x, pos.y);
     const slotSize = 11, gap = 2;
     const panelW = 24;
     const panelH = 8 * (slotSize + gap) + 16;
@@ -302,10 +374,12 @@ const BoardRenderer = {
         'pointer-events': 'none'
       }).textContent = '£' + price;
     }
+    this.endScaledGroup();
   },
 
   drawTurnOrderPanel(state) {
     const pos = this.getMarketPos('turnOrderPanel');
+    this.beginScaledGroup('turnOrderPanel', pos.x, pos.y);
     const numPlayers = state.players.length;
     const rowH = 14;
     const panelH = numPlayers * rowH + 16;
@@ -345,10 +419,12 @@ const BoardRenderer = {
         'pointer-events': 'none'
       }).textContent = (isCurrent ? '▸ ' : '') + (p.username || '').substring(0, 8);
     }
+    this.endScaledGroup();
   },
 
   drawMoneySpentPanel(state) {
     const pos = this.getMarketPos('moneySpentPanel');
+    this.beginScaledGroup('moneySpentPanel', pos.x, pos.y);
     const numPlayers = state.players.length;
     const rowH = 14;
     const panelH = numPlayers * rowH + 16;
@@ -404,10 +480,12 @@ const BoardRenderer = {
         });
       }
     }
+    this.endScaledGroup();
   },
 
   drawVPPanel(state) {
     const pos = this.getMarketPos('vpPanel');
+    this.beginScaledGroup('vpPanel', pos.x, pos.y);
     const numPlayers = state.players.length;
     const colW = 28;
     const panelW = numPlayers * colW + 4;
@@ -449,10 +527,12 @@ const BoardRenderer = {
         'pointer-events': 'none'
       }).textContent = (p.username || '').substring(0, 6);
     }
+    this.endScaledGroup();
   },
 
   drawIncomePanel(state) {
     const pos = this.getMarketPos('incomePanel');
+    this.beginScaledGroup('incomePanel', pos.x, pos.y);
     const boxSize = 7;
     const gap = 1;
     const cols = 5;
@@ -517,6 +597,7 @@ const BoardRenderer = {
         }
       }
     }
+    this.endScaledGroup();
   },
 
   drawLocations() {
@@ -526,6 +607,7 @@ const BoardRenderer = {
       const locState = state.board.locations[locId];
       if (!locState) continue;
 
+      this.beginScaledGroup(locId, loc.x, loc.y);
       const numSlots = locState.slots.length;
       const cols = Math.min(numSlots, 2);
       const rows = Math.ceil(numSlots / 2);
@@ -577,6 +659,7 @@ const BoardRenderer = {
 
         this.drawSlot(locId, locState.slots[i], i, sx, sy, slotSize);
       }
+      this.endScaledGroup();
     }
   },
 
@@ -655,8 +738,26 @@ const BoardRenderer = {
 
   createAndAppend(tag, attrs) {
     const el = this.createSVG(tag, attrs);
-    this.svg.appendChild(el);
+    // If we're inside a scaled group, append there; otherwise to svg
+    const target = this._currentGroup || this.svg;
+    target.appendChild(el);
     return el;
+  },
+
+  _currentGroup: null,
+
+  // Begin a scaled group centered at (cx, cy) with scale from customPositions
+  beginScaledGroup(id, cx, cy) {
+    const s = this.getScale(id);
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform', 'translate(' + cx + ',' + cy + ') scale(' + s + ') translate(' + (-cx) + ',' + (-cy) + ')');
+    this.svg.appendChild(g);
+    this._currentGroup = g;
+    return g;
+  },
+
+  endScaledGroup() {
+    this._currentGroup = null;
   },
 
   highlightLocations(locIds, callback) {
