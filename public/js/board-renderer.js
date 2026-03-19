@@ -625,10 +625,10 @@ const BoardRenderer = {
           fill: '#222', stroke: '#444', 'stroke-width': 0.3, rx: 0.5
         });
       } else if (players.length === 1) {
-        // Single player
+        // Single player — orange fill with player-colored border
         this.createAndAppend('rect', {
           x: bx, y: by, width: boxSize, height: boxSize,
-          fill: BOARD.playerColors[players[0]], stroke: '#fff', 'stroke-width': 0.8, rx: 0.5
+          fill: '#e08030', stroke: BOARD.playerColors[players[0]], 'stroke-width': 1, rx: 0.5
         });
       } else {
         // Multiple players: split square evenly
