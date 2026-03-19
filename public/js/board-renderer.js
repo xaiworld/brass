@@ -536,16 +536,7 @@ const BoardRenderer = {
     const panelW = numPlayers * colW + 4;
     const panelH = 36;
 
-    // Pink-tinted panel background matching VP hexagon color
-    const vpBgX = pos.x - 2, vpBgY = pos.y - 6;
-    const vpBg = this.createAndAppend('rect', {
-      x: vpBgX, y: vpBgY, width: panelW, height: panelH,
-      rx: 3, fill: '#cc336622',
-      stroke: (this.editMode || this.resizeMode) ? '#ffcc00' : '#cc336666',
-      'stroke-width': (this.editMode || this.resizeMode) ? 1.5 : 0.8
-    });
-    vpBg.addEventListener('mousedown', (e) => this.onDragStart(e, 'vpPanel', 'market'));
-    this.addResizeHandle('vpPanel', vpBgX, vpBgY, panelW, panelH);
+    this.createPanelBg('vpPanel', pos.x - 2, pos.y - 6, panelW, panelH);
 
     // Label
     this.createAndAppend('text', {
@@ -558,17 +549,23 @@ const BoardRenderer = {
       const p = state.players[i];
       const cx = pos.x + i * colW + colW/2;
 
-      // Colored square with VP
-      const vpFill = this.minimalMode ? 'none' : BOARD.playerColors[p.seat];
-      this.createAndAppend('rect', {
-        x: cx - 9, y: pos.y + 6,
-        width: 18, height: 14, rx: 2,
-        fill: vpFill, stroke: BOARD.playerColors[p.seat], 'stroke-width': this.minimalMode ? 1.5 : 0.5
+      // VP hexagon
+      const hcy = pos.y + 13;
+      const hr = 9; // hexagon radius
+      const hexPoints = [0,1,2,3,4,5].map(n => {
+        const angle = Math.PI / 180 * (60 * n - 90);
+        return (cx + hr * Math.cos(angle)).toFixed(1) + ',' + (hcy + hr * Math.sin(angle)).toFixed(1);
+      }).join(' ');
+      const vpFill = this.minimalMode ? 'none' : '#cc3366';
+      this.createAndAppend('polygon', {
+        points: hexPoints,
+        fill: vpFill, stroke: BOARD.playerColors[p.seat],
+        'stroke-width': this.minimalMode ? 1.5 : 2
       });
       this.createAndAppend('text', {
-        x: cx, y: pos.y + 16,
-        'text-anchor': 'middle', 'font-size': '8',
-        fill: this.minimalMode ? BOARD.playerColors[p.seat] : '#fff',
+        x: cx, y: hcy,
+        'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '7',
+        fill: this.minimalMode ? '#cc3366' : '#fff',
         'font-weight': 'bold', 'pointer-events': 'none'
       }).textContent = p.vp;
       // Name below
@@ -625,10 +622,10 @@ const BoardRenderer = {
           fill: '#222', stroke: '#444', 'stroke-width': 0.3, rx: 0.5
         });
       } else if (players.length === 1) {
-        // Single player — orange fill with player-colored border
+        // Single player — orange fill with orange border
         this.createAndAppend('rect', {
           x: bx, y: by, width: boxSize, height: boxSize,
-          fill: '#e08030', stroke: BOARD.playerColors[players[0]], 'stroke-width': 1, rx: 0.5
+          fill: '#e08030', stroke: '#e0803088', 'stroke-width': 0.8, rx: 0.5
         });
       } else {
         // Multiple players: split square evenly
@@ -652,7 +649,7 @@ const BoardRenderer = {
           this.createAndAppend('rect', { x: bx + h2, y: by + h2, width: h2, height: h2, fill: BOARD.playerColors[players[3] || players[0]] });
         }
         // Border
-        this.createAndAppend('rect', { x: bx, y: by, width: boxSize, height: boxSize, fill: 'none', stroke: '#fff', 'stroke-width': 0.5, rx: 0.5 });
+        this.createAndAppend('rect', { x: bx, y: by, width: boxSize, height: boxSize, fill: 'none', stroke: '#e0803088', 'stroke-width': 0.5, rx: 0.5 });
       }
 
       // Show number every 10
