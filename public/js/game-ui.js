@@ -508,10 +508,69 @@ const GameUI = {
 
   // ============ HAND ============
 
+  handCollapsed: false,
+
+  toggleHand() {
+    this.handCollapsed = !this.handCollapsed;
+    this.updateHand();
+  },
+
   selectCard(cardId) {
     this.selectedCard = cardId;
     this.updateHand();
     this.updateActionPanel();
+  },
+
+  onCardHover(cardId) {
+    BoardRenderer.clearHighlights();
+    const info = parseCardId(cardId);
+    if (info.type === 'location') {
+      // Highlight the matching location
+      if (BOARD.locations[info.location]) {
+        BoardRenderer.highlightLocations([info.location], () => {});
+      }
+    } else if (info.type === 'industry') {
+      // Highlight all locations where this industry can be built given rules + resources + money
+      const validLocs = this.getValidBuildLocations(info.industry);
+      if (validLocs.length > 0) {
+        BoardRenderer.highlightLocations(validLocs, () => {});
+      }
+    }
+  },
+
+  onCardLeave() {
+    BoardRenderer.clearHighlights();
+  },
+
+  getValidBuildLocations(industryType) {
+    const myPlayer = gameState.players.find(p => p.userId === USER_ID);
+    if (!myPlayer) return [];
+
+    const mat = myPlayer.industryMat[industryType];
+    if (!mat || mat.length === 0) return [];
+    const level = mat[0];
+
+    // Rail era can't build level 1
+    if (gameState.era === 'rail' && level <= 1) return [];
+    // Shipyard level 0 can't be built
+    if (industryType === 'shipyard' && level === 0) return [];
+
+    const tileData = INDUSTRIES[industryType]?.levels[level];
+    if (!tileData || myPlayer.money < tileData.cost) return [];
+
+    const validLocs = [];
+    for (const [locId, loc] of Object.entries(gameState.board.locations)) {
+      for (let i = 0; i < loc.slots.length; i++) {
+        const slot = loc.slots[i];
+        if (!slot.allowed.includes(industryType)) continue;
+        if (slot.owner !== null && slot.owner !== myPlayer.seat) continue;
+        // Canal era: one per location
+        if (gameState.era === 'canal' && loc.slots.some(s => s.owner === myPlayer.seat) && slot.owner !== myPlayer.seat) continue;
+        validLocs.push(locId);
+        break; // one match per location is enough
+      }
+    }
+    return [...new Set(validLocs)];
   },
 
   updateHand() {
@@ -522,42 +581,70 @@ const GameUI = {
       return;
     }
 
+    const arrow = this.handCollapsed ? '&#9654;' : '&#9660;';
     panel.innerHTML = `
-      <h4>Hand (${myPlayer.hand.length})</h4>
-      <div class="hand-cards">
+      <h4 class="collapsible-header" onclick="GameUI.toggleHand()">Hand (${myPlayer.hand.length}) <span class="collapse-arrow">${arrow}</span></h4>
+      ${this.handCollapsed ? '' : `<div class="hand-cards">
         ${myPlayer.hand.map(cardId => {
           const info = parseCardId(cardId);
           const label = info.type === 'location'
             ? (BOARD.locations[info.location]?.name || info.location)
-            : info.industry;
+            : (INDUSTRIES[info.industry]?.name || info.industry);
           const isSelected = this.selectedCard === cardId;
           return `<div class="card ${info.type} ${isSelected ? 'selected' : ''}"
-            onclick="GameUI.selectCard('${cardId}')">
+            onclick="GameUI.selectCard('${cardId}')"
+            onmouseenter="GameUI.onCardHover('${cardId}')"
+            onmouseleave="GameUI.onCardLeave()">
             <div class="card-type">${info.type === 'location' ? 'LOC' : 'IND'}</div>
             <div class="card-label">${label}</div>
           </div>`;
         }).join('')}
-      </div>
+      </div>`}
     `;
   },
 
   // ============ INDUSTRY MAT ============
+
+  matCollapsed: false,
+
+  toggleMat() {
+    this.matCollapsed = !this.matCollapsed;
+    this.updateMat();
+  },
 
   updateMat() {
     const panel = document.getElementById('mat-panel');
     const myPlayer = gameState.players.find(p => p.userId === USER_ID);
     if (!myPlayer) { panel.innerHTML = ''; return; }
 
+    const arrow = this.matCollapsed ? '&#9654;' : '&#9660;';
     panel.innerHTML = `
-      <h4>Industry Mat</h4>
-      <div class="mat-tiles">
-        ${Object.entries(myPlayer.industryMat).map(([type, levels]) =>
-          `<div class="mat-row">
-            <span class="mat-type">${type}:</span>
-            <span class="mat-levels">${levels.length > 0 ? levels.map(l => `L${l}`).join(' ') : '(empty)'}</span>
-          </div>`
-        ).join('')}
-      </div>
+      <h4 class="collapsible-header" onclick="GameUI.toggleMat()">Industry Mat <span class="collapse-arrow">${arrow}</span></h4>
+      ${this.matCollapsed ? '' : `<div class="mat-tiles">
+        ${Object.entries(myPlayer.industryMat).map(([type, levels]) => {
+          const ind = INDUSTRIES[type];
+          if (!ind) return '';
+          const topLevel = levels[0];
+          const tileData = topLevel !== undefined ? ind.levels[topLevel] : null;
+          return `<div class="mat-group">
+            <div class="mat-header">
+              <span class="mat-name">${ind.name}</span>
+              <span class="mat-count">${levels.length} tile${levels.length !== 1 ? 's' : ''}</span>
+            </div>
+            ${levels.length > 0 ? `
+              <div class="mat-levels-row">
+                ${levels.map(l => {
+                  const ld = ind.levels[l];
+                  return `<span class="mat-tile" title="L${l}: £${ld.cost}${ld.coal ? ' +' + ld.coal + ' coal' : ''}${ld.iron ? ' +' + ld.iron + ' iron' : ''} → +${ld.income} inc, ${ld.vp} VP${ld.cubes ? ', ' + ld.cubes + ' cubes' : ''}">L${l}</span>`;
+                }).join(' ')}
+              </div>
+              ${tileData ? `<div class="mat-detail">
+                Next: L${topLevel} — £${tileData.cost}${tileData.coal ? ' +' + tileData.coal + '⬛' : ''}${tileData.iron ? ' +' + tileData.iron + '🟧' : ''} → +${tileData.income} inc, ${tileData.vp} VP
+              </div>` : ''}
+            ` : '<div class="mat-detail muted">(all built)</div>'}
+          </div>`;
+        }).join('')}
+      </div>`}
     `;
   },
 

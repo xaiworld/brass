@@ -272,11 +272,23 @@ a:hover { text-decoration: underline; }
 .card-type { font-size: 8px; color: var(--text-muted); text-transform: uppercase; }
 .card-label { font-size: 9px; font-weight: bold; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Collapsible panel headers */
+.collapsible-header { cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+.collapsible-header:hover { opacity: 0.8; }
+.collapse-arrow { font-size: 9px; color: var(--text-muted); }
+
 /* Mat */
-.mat-tiles { font-size: 10px; }
-.mat-row { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #333; }
-.mat-type { color: var(--text-muted); }
-.mat-levels { font-family: monospace; }
+.mat-tiles { font-size: 10px; display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.mat-group { background: #ffffff08; padding: 5px 6px; border-radius: 3px; }
+.mat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.mat-name { font-weight: bold; font-size: 10px; }
+.mat-count { color: var(--text-muted); font-size: 9px; }
+.mat-levels-row { display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 2px; }
+.mat-tile {
+  display: inline-block; padding: 1px 5px; font-family: monospace; font-size: 9px;
+  background: var(--surface-light); border-radius: 2px; cursor: help;
+}
+.mat-detail { font-size: 9px; color: var(--text-muted); line-height: 1.3; }
 
 /* Collapsible Log */
 .log-wrapper { border-top: 1px solid #333; }
