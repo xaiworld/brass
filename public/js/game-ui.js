@@ -565,7 +565,7 @@ const GameUI = {
     this.updateActionPanel();
   },
 
-  onCardHover(cardId) {
+  onCardHover(cardId, event) {
     if (this.selectedAction) return;
     this.hoveredCard = cardId;
     BoardRenderer.clearHighlights();
@@ -580,7 +580,7 @@ const GameUI = {
         BoardRenderer.highlightLocations(validLocs, () => {});
       }
     }
-    this.showActionPopup(cardId, info);
+    this.showActionPopup(cardId, info, event);
   },
 
   onCardLeave() {
@@ -595,7 +595,7 @@ const GameUI = {
 
   actionPopupHovered: false,
 
-  showActionPopup(cardId, info) {
+  showActionPopup(cardId, info, event) {
     let popup = document.getElementById('action-popup');
     if (!popup) {
       popup = document.createElement('div');
@@ -606,7 +606,28 @@ const GameUI = {
         this.actionPopupHovered = false;
         if (!this.hoveredCard) this.hideActionPopup();
       });
-      document.querySelector('.game-main').appendChild(popup);
+      document.body.appendChild(popup);
+    }
+
+    // Position relative to the hovered card
+    if (event && event.target) {
+      const card = event.target.closest('.card');
+      if (card) {
+        const rect = card.getBoundingClientRect();
+        if (this.handDetached) {
+          // Floating hand: show above the card
+          popup.style.left = rect.left + 'px';
+          popup.style.top = (rect.top - 10) + 'px';
+          popup.style.right = 'auto';
+          popup.style.transform = 'translateY(-100%)';
+        } else {
+          // Docked: show to the left of the card
+          popup.style.left = (rect.left - 10) + 'px';
+          popup.style.top = rect.top + 'px';
+          popup.style.right = 'auto';
+          popup.style.transform = 'translateX(-100%)';
+        }
+      }
     }
 
     const myPlayer = gameState.players.find(p => p.userId === USER_ID);
@@ -689,7 +710,7 @@ const GameUI = {
     const isSelected = this.selectedCard === cardId;
     return '<div class="card card-big ' + info.type + (isSelected ? ' selected' : '') + '"'
       + ' onclick="GameUI.selectCard(\'' + cardId + '\')"'
-      + ' onmouseenter="GameUI.onCardHover(\'' + cardId + '\')"'
+      + ' onmouseenter="GameUI.onCardHover(\'' + cardId + '\', event)"'
       + ' onmouseleave="GameUI.onCardLeave()">'
       + '<div class="card-type">' + (info.type === 'location' ? 'LOC' : 'IND') + '</div>'
       + '<div class="card-label">' + label + '</div>'

@@ -328,16 +328,13 @@ a:hover { text-decoration: underline; }
 
 /* Action popup (on card hover) */
 .action-popup {
-  position: absolute;
-  right: 258px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: fixed;
   background: rgba(15, 20, 35, 0.95);
   border: 1px solid #555;
   border-radius: 6px;
   padding: 8px;
-  z-index: 25;
-  min-width: 170px;
+  z-index: 40;
+  min-width: 160px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
 .popup-title { font-size: 10px; color: var(--gold); margin-bottom: 4px; font-weight: bold; }
