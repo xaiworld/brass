@@ -90,7 +90,7 @@
                   </form>
                 <% } else if (game.status === 'waiting') { %>
                   <a href="/games/<%= game.id %>" class="btn">Enter</a>
-                  <% if (game.is_creator && game.player_count >= 3) { %>
+                  <% if (game.is_creator && game.player_count >= game.num_players) { %>
                     <form method="POST" action="/games/<%= game.id %>/start" style="display:inline">
                       <button type="submit" class="btn btn-primary">Start</button>
                     </form>
