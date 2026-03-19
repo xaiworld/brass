@@ -76,6 +76,11 @@ router.post('/games/:id/join', requireLogin, (req, res) => {
   res.redirect('/lobby');
 });
 
+// GET fallback in case browser navigates directly
+router.get('/games/:id/start', requireLogin, (req, res) => {
+  res.redirect('/lobby');
+});
+
 router.post('/games/:id/start', requireLogin, (req, res) => {
   const userId = req.session.user.id;
   const gameId = parseInt(req.params.id);
