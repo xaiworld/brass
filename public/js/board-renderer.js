@@ -617,10 +617,13 @@ const BoardRenderer = {
       const players = playerIncomes[num] || [];
 
       if (players.length === 0) {
-        // Empty square
+        // Empty square — tinted by income value
+        const incV = INCOME_TRACK[num];
+        const emptyFill = incV < 0 ? '#331111' : incV === 0 ? '#333' : '#222';
+        const emptyStroke = num === 10 ? '#ffffff66' : '#444'; // highlight starting position
         this.createAndAppend('rect', {
           x: bx, y: by, width: boxSize, height: boxSize,
-          fill: '#222', stroke: '#444', 'stroke-width': 0.3, rx: 0.5
+          fill: emptyFill, stroke: emptyStroke, 'stroke-width': num === 10 ? 0.8 : 0.3, rx: 0.5
         });
       } else if (players.length === 1) {
         // Single player — orange fill with orange border
@@ -653,13 +656,18 @@ const BoardRenderer = {
         this.createAndAppend('rect', { x: bx, y: by, width: boxSize, height: boxSize, fill: 'none', stroke: '#e0803088', 'stroke-width': 0.5, rx: 0.5 });
       }
 
-      // Show number every 10
-      if (num % 10 === 0) {
+      // Show income value at the last square of each income band
+      const incVal = INCOME_TRACK[num];
+      const nextIncVal = num < 99 ? INCOME_TRACK[num + 1] : null;
+      const isLabelSquare = (nextIncVal !== null && nextIncVal !== incVal) || num === 99 || num <= 10;
+      if (isLabelSquare && (num <= 10 || num % 2 === 0 || incVal >= 11)) {
         this.createAndAppend('text', {
-          x: bx + boxSize/2, y: by + boxSize/2 + 1.5,
-          'text-anchor': 'middle', 'font-size': '3', fill: players.length > 0 ? '#fff' : '#888',
-          'pointer-events': 'none'
-        }).textContent = num;
+          x: bx + boxSize/2, y: by + boxSize/2,
+          'text-anchor': 'middle', 'dominant-baseline': 'central',
+          'font-size': incVal < 0 ? '2.5' : '3',
+          fill: players.length > 0 ? '#fff' : (incVal < 0 ? '#e94560' : incVal === 0 ? '#888' : '#e08030'),
+          'font-weight': 'bold', 'pointer-events': 'none'
+        }).textContent = (incVal >= 0 ? '+' : '') + incVal;
       }
     }
     this.endScaledGroup();

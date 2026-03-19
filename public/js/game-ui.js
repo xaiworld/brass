@@ -245,8 +245,9 @@ const GameUI = {
       return;
     }
 
+    const roundsPerEra = s.numPlayers === 3 ? 10 : 8;
     panel.innerHTML = ''
-      + '<div class="info-row"><strong>' + (s.era === 'canal' ? 'Canal' : 'Rail') + '</strong> Era — Round ' + s.round + '</div>'
+      + '<div class="info-row"><strong>' + (s.era === 'canal' ? 'Canal' : 'Rail') + '</strong> Era — Round ' + s.round + '/' + roundsPerEra + '</div>'
       + '<div class="info-row" style="color:' + BOARD.playerColors[currentSeat] + '">' + currentPlayer.username + ' (' + s.actionsRemaining + ' action' + (s.actionsRemaining > 1 ? 's' : '') + ')</div>'
       + '<div class="info-row">Deck: ' + s.drawPile.length + ' cards</div>';
   },

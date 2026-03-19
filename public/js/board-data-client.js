@@ -84,6 +84,15 @@ const BOARD = {
   }
 };
 
+// Income track: square 0-99 -> actual income per round
+const INCOME_TRACK = [];
+for (let i = 0; i <= 9; i++) INCOME_TRACK[i] = -10 + i;
+INCOME_TRACK[10] = 0;
+for (let inc = 1; inc <= 10; inc++) { const b = 10 + (inc-1)*2 + 1; INCOME_TRACK[b] = inc; INCOME_TRACK[b+1] = inc; }
+for (let inc = 11; inc <= 20; inc++) { const b = 30 + (inc-11)*3 + 1; INCOME_TRACK[b] = inc; INCOME_TRACK[b+1] = inc; INCOME_TRACK[b+2] = inc; }
+for (let inc = 21; inc <= 29; inc++) { const b = 60 + (inc-21)*4 + 1; INCOME_TRACK[b] = inc; INCOME_TRACK[b+1] = inc; INCOME_TRACK[b+2] = inc; INCOME_TRACK[b+3] = inc; }
+INCOME_TRACK[97] = 30; INCOME_TRACK[98] = 30; INCOME_TRACK[99] = 30;
+
 // Deep copy of default positions for reset
 const BOARD_DEFAULTS = {
   locations: Object.fromEntries(Object.entries(BOARD.locations).map(([k, v]) => [k, { x: v.x, y: v.y }])),
