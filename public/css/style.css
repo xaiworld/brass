@@ -362,7 +362,19 @@ a:hover { text-decoration: underline; }
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 4px; font-size: 11px; color: var(--gold);
 }
-.floating-hand-cards { display: flex; gap: 4px; overflow-x: auto; }
+.floating-hand-cards {
+  display: flex; gap: 4px; overflow-x: auto;
+  height: calc(100% - 24px); /* fill below header */
+  align-items: stretch;
+}
+.floating-hand-cards .card.card-big {
+  height: auto;
+  min-height: unset;
+  flex: 0 0 auto;
+  min-width: 56px;
+  width: auto;
+  padding: 6px 8px;
+}
 
 /* Action popup (on card hover) */
 .action-popup {
@@ -443,21 +455,14 @@ a:hover { text-decoration: underline; }
 }
 .tile-inc-inline { width: 16px; height: 16px; font-size: 7px; vertical-align: middle; }
 
-/* Minimal mode: transparent backgrounds, only colored borders */
+/* Minimal mode: transparent backgrounds, colored outlines */
 body.minimal-mode .tile-vp-hex {
   background: transparent; color: #cc3366;
-  /* clip-path removes border, so use outline + drop-shadow instead */
-  clip-path: none;
-  border-radius: 2px;
-  border: 1.5px solid #cc3366;
-  width: auto; height: auto;
-  padding: 0 2px;
+  filter: drop-shadow(0 0 1px #cc3366) drop-shadow(0 0 0.5px #cc3366);
 }
 body.minimal-mode .tile-vp-inline {
-  clip-path: none;
-  border-radius: 2px;
-  border: 1.5px solid #cc3366;
-  padding: 0 3px;
+  background: transparent; color: #cc3366;
+  filter: drop-shadow(0 0 1px #cc3366) drop-shadow(0 0 0.5px #cc3366);
 }
 body.minimal-mode .tile-inc-circle { background: transparent; color: #e08030; border: 1.5px solid #e08030; }
 body.minimal-mode .money-disc.silver { background: transparent; color: #C0C0C0; border-color: #C0C0C0; }
