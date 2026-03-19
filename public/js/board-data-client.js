@@ -45,6 +45,7 @@ const BOARD = {
     { id: 'colne-yorkshire', from: 'colne', to: 'yorkshire', canal: true, rail: true, segments: 2 },
     { id: 'rochdale-yorkshire', from: 'rochdale', to: 'yorkshire', canal: true, rail: true, segments: 2 },
     { id: 'wigan-bolton', from: 'wigan', to: 'bolton', canal: false, rail: true, segments: 1 },
+    { id: 'wigan-warrington', from: 'wigan', to: 'warrington', canal: true, rail: true, segments: 1 },
     { id: 'wigan-liverpool', from: 'wigan', to: 'liverpool', canal: true, rail: true, segments: 1 },
     { id: 'wigan-southport', from: 'wigan', to: 'southport', canal: false, rail: true, segments: 2 },
     { id: 'southport-liverpool', from: 'southport', to: 'liverpool', canal: false, rail: true, segments: 2 },

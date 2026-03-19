@@ -264,6 +264,7 @@ a:hover { text-decoration: underline; }
 .market-fill.coal { background: #555; }
 .market-fill.iron { background: #d4740e; }
 .market-fill.demand { background: var(--accent); }
+.market-detail { display: flex; justify-content: space-between; font-size: 9px; margin-top: 2px; }
 
 /* Actions */
 .action-buttons { display: flex; flex-wrap: wrap; gap: 4px; }

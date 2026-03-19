@@ -108,6 +108,8 @@ const GameUI = {
   updateMarkets() {
     const panel = document.getElementById('market-panel');
     const s = gameState;
+    const tilesLeft = s.distantMarketTiles ? s.distantMarketTiles.length : 0;
+    const flipped = s.distantMarketFlipped || [];
     panel.innerHTML = `
       <h4>Markets</h4>
       <div class="market-row">
@@ -121,6 +123,10 @@ const GameUI = {
       <div class="market-row">
         <span>Demand: ${s.distantMarketDemand}/8</span>
         <div class="market-bar"><div class="market-fill demand" style="width:${s.distantMarketDemand/8*100}%"></div></div>
+      </div>
+      <div class="market-detail">
+        <span class="muted">${tilesLeft} tiles left</span>
+        ${flipped.length > 0 ? `<span class="muted">Flipped: ${flipped.map(t => t === 0 ? '0' : t).join(', ')}</span>` : ''}
       </div>
     `;
   },

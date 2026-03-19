@@ -66,6 +66,9 @@ const BoardRenderer = {
 
     // Draw locations as rectangles
     this.drawLocations();
+
+    // Draw demand marker
+    this.drawDemandMarker();
   },
 
   setMapOpacity(value) {
@@ -170,6 +173,54 @@ const BoardRenderer = {
         }).textContent = wp.name;
       }
     }
+  },
+
+  drawDemandMarker() {
+    const state = gameState;
+    const demand = state.distantMarketDemand;
+
+    // Demand track position on the board (right side, "Cotton Demand" area)
+    // Track goes from top (demand=8) to bottom (demand=0)
+    const trackX = 573;
+    const trackTop = 310;
+    const trackBottom = 470;
+    const step = (trackBottom - trackTop) / 8;
+
+    // Draw track background
+    this.createAndAppend('rect', {
+      x: trackX - 12, y: trackTop - 8,
+      width: 24, height: trackBottom - trackTop + 16,
+      rx: 3, fill: '#00000066', stroke: '#88888844', 'stroke-width': 0.5
+    });
+
+    // Draw scale labels
+    for (let i = 0; i <= 8; i++) {
+      const y = trackTop + i * step;
+      this.createAndAppend('text', {
+        x: trackX - 16, y: y + 3,
+        'text-anchor': 'end', 'font-size': '7', fill: '#888',
+        'pointer-events': 'none'
+      }).textContent = 8 - i;
+    }
+
+    // Draw marker at current demand
+    const markerY = trackTop + (8 - demand) * step;
+    this.createAndAppend('circle', {
+      cx: trackX, cy: markerY, r: 7,
+      fill: '#e94560', stroke: '#fff', 'stroke-width': 1.5
+    });
+    this.createAndAppend('text', {
+      x: trackX, y: markerY + 3,
+      'text-anchor': 'middle', 'font-size': '8', fill: '#fff',
+      'font-weight': 'bold', 'pointer-events': 'none'
+    }).textContent = demand;
+
+    // Label
+    this.createAndAppend('text', {
+      x: trackX, y: trackTop - 14,
+      'text-anchor': 'middle', 'font-size': '7', fill: '#e94560',
+      'font-weight': 'bold', 'pointer-events': 'none'
+    }).textContent = 'DEMAND';
   },
 
   drawLocations() {
