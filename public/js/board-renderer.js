@@ -591,16 +591,7 @@ const BoardRenderer = {
     const panelW = cols * (boxSize + gap) + 8;
     const panelH = rows * (boxSize + gap) + 14;
 
-    // Orange-tinted panel background
-    const bgX = pos.x - 4, bgY = pos.y - 6;
-    const bg = this.createAndAppend('rect', {
-      x: bgX, y: bgY, width: panelW, height: panelH,
-      rx: 3, fill: '#e0803022',
-      stroke: (this.editMode || this.resizeMode) ? '#ffcc00' : '#e0803066',
-      'stroke-width': (this.editMode || this.resizeMode) ? 1.5 : 0.8
-    });
-    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'incomePanel', 'market'));
-    this.addResizeHandle('incomePanel', bgX, bgY, panelW, panelH);
+    this.createPanelBg('incomePanel', pos.x - 4, pos.y - 6, panelW, panelH);
 
     this.createAndAppend('text', {
       x: pos.x + panelW/2 - 4, y: pos.y + 2,
