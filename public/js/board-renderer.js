@@ -687,36 +687,33 @@ const BoardRenderer = {
       }
     }
 
-    // Serpentine U-turn arrows at row ends
-    const r = 1.2; // curve radius
+    // Serpentine U-turn arrows at row ends (start/end near row edges)
+    const r = 1.2;
     for (let row = 0; row < rows - 1; row++) {
-      const by1 = startY + row * (boxSize + gap) + boxSize / 2;
-      const by2 = startY + (row + 1) * (boxSize + gap) + boxSize / 2;
-      const midY = (by1 + by2) / 2;
+      const by1 = startY + row * (boxSize + gap) + boxSize; // bottom of current row
+      const by2 = startY + (row + 1) * (boxSize + gap);     // top of next row
 
       if (row % 2 === 0) {
-        // Turn at right side
-        const tx = pos.x + cols * (boxSize + gap) - gap + 2;
+        const tx = pos.x + cols * (boxSize + gap) - gap + 1;
         this.createAndAppend('path', {
           d: 'M ' + tx + ' ' + by1 + ' C ' + (tx + r*2) + ' ' + by1 + ' ' + (tx + r*2) + ' ' + by2 + ' ' + tx + ' ' + by2,
-          fill: 'none', stroke: '#55555588', 'stroke-width': 0.4,
+          fill: 'none', stroke: '#55555566', 'stroke-width': 0.3,
           'marker-end': 'url(#arrowhead)', 'pointer-events': 'none'
         });
       } else {
-        // Turn at left side
-        const tx = pos.x - 2;
+        const tx = pos.x - 1;
         this.createAndAppend('path', {
           d: 'M ' + tx + ' ' + by1 + ' C ' + (tx - r*2) + ' ' + by1 + ' ' + (tx - r*2) + ' ' + by2 + ' ' + tx + ' ' + by2,
-          fill: 'none', stroke: '#55555588', 'stroke-width': 0.4,
+          fill: 'none', stroke: '#55555566', 'stroke-width': 0.3,
           'marker-end': 'url(#arrowhead)', 'pointer-events': 'none'
         });
       }
     }
 
-    // Define arrowhead marker (if not already)
+    // Open chevron arrowhead marker
     if (!this.svg.querySelector('#arrowhead')) {
       const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-      defs.innerHTML = '<marker id="arrowhead" markerWidth="2.5" markerHeight="1.5" refX="2.5" refY="0.75" orient="auto"><polygon points="0,0 2.5,0.75 0,1.5" fill="#55555588"/></marker>';
+      defs.innerHTML = '<marker id="arrowhead" markerWidth="3" markerHeight="3" refX="3" refY="1.5" orient="auto"><polyline points="0,0.3 2.5,1.5 0,2.7" fill="none" stroke="#55555588" stroke-width="0.4"/></marker>';
       this.svg.insertBefore(defs, this.svg.firstChild);
     }
 
