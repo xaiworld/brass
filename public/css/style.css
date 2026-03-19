@@ -369,11 +369,19 @@ a:hover { text-decoration: underline; }
   align-items: stretch;
 }
 .floating-hand-cards .card {
-  width: auto;
+  width: auto !important;
   height: 100%;
   aspect-ratio: 1 / 1.618;
   min-width: 0;
   min-height: 0;
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+.floating-hand-cards .card .card-label {
+  font-size: clamp(6px, 1.2vh, 11px);
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: none;
 }
 
 /* Action popup (on card hover) */
