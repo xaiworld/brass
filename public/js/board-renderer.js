@@ -684,7 +684,7 @@ const BoardRenderer = {
     }
 
     // Serpentine U-turn arrows at row ends
-    const r = 1.5; // curve radius
+    const r = 1.2; // curve radius
     for (let row = 0; row < rows - 1; row++) {
       const by1 = startY + row * (boxSize + gap) + boxSize / 2;
       const by2 = startY + (row + 1) * (boxSize + gap) + boxSize / 2;
