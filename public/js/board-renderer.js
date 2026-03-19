@@ -556,16 +556,16 @@ const BoardRenderer = {
         const angle = Math.PI / 180 * (60 * n - 90);
         return (cx + hr * Math.cos(angle)).toFixed(1) + ',' + (hcy + hr * Math.sin(angle)).toFixed(1);
       }).join(' ');
-      const vpFill = this.minimalMode ? 'none' : '#cc3366';
+      const vpFill = this.minimalMode ? 'none' : BOARD.playerColors[p.seat];
       this.createAndAppend('polygon', {
         points: hexPoints,
-        fill: vpFill, stroke: BOARD.playerColors[p.seat],
-        'stroke-width': this.minimalMode ? 1.5 : 2
+        fill: vpFill, stroke: '#cc3366',
+        'stroke-width': this.minimalMode ? 1.5 : 1
       });
       this.createAndAppend('text', {
         x: cx, y: hcy,
         'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '7',
-        fill: this.minimalMode ? '#cc3366' : '#fff',
+        fill: this.minimalMode ? BOARD.playerColors[p.seat] : '#fff',
         'font-weight': 'bold', 'pointer-events': 'none'
       }).textContent = p.vp;
       // Name below

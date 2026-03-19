@@ -264,7 +264,14 @@ const GameUI = {
     const myPlayer = s.players.find(p => p.userId === USER_ID);
 
     if (!myPlayer || myPlayer.seat !== currentSeat || s.phase !== 'actions') {
-      panel.innerHTML = '<p class="muted">Waiting for other players...</p>';
+      const cp = s.players[currentSeat];
+      if (cp && cp.isBot) {
+        panel.innerHTML = '<p class="muted">' + cp.username + ' is thinking...</p>';
+      } else if (s.phase === 'finished') {
+        panel.innerHTML = '<p class="muted">Game finished</p>';
+      } else {
+        panel.innerHTML = '<p class="muted">Waiting for ' + (cp ? cp.username : 'other players') + '...</p>';
+      }
       return;
     }
 
