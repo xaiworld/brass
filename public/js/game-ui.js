@@ -846,7 +846,7 @@ const GameUI = {
   renderCardHTML(cardId) {
     const info = parseCardId(cardId);
     const label = info.type === 'location'
-      ? (BOARD.locations[info.location]?.name || info.location)
+      ? (BOARD.locations[info.location]?.name || BOARD.nonBuildable[info.location]?.name || info.location)
       : (INDUSTRIES[info.industry]?.name || info.industry);
     const isSelected = this.selectedCard === cardId;
     return '<div class="card ' + info.type + (isSelected ? ' selected' : '') + '"'
