@@ -317,3 +317,31 @@ a:hover { text-decoration: underline; }
 .wiki-table th, .wiki-table td { padding: 6px 10px; border: 1px solid #444; text-align: left; font-size: 13px; }
 .wiki-table th { background: var(--surface); color: var(--gold); }
 .wiki-tip { background: var(--surface); padding: 12px; border-radius: 6px; margin: 10px 0; border-left: 3px solid var(--gold); }
+
+/* Profile / Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 16px 0 24px;
+}
+.stat-card {
+  background: var(--bg-light);
+  padding: 14px;
+  border-radius: 8px;
+  text-align: center;
+}
+.stat-value { font-size: 28px; font-weight: bold; color: var(--gold); }
+.stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.game-history { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.history-card {
+  background: var(--bg-light);
+  padding: 10px 14px;
+  border-radius: 6px;
+  border-left: 3px solid var(--text-muted);
+}
+.history-card.history-win { border-left-color: var(--success); }
+.history-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.history-players { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-muted); }
+.history-player.winner { color: var(--gold); font-weight: bold; }

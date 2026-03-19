@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brass: Lancashire - Profile</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/lobby" class="nav-brand">Brass: Lancashire</a>
+    <div class="nav-links">
+      <a href="/wiki" class="nav-link">Wiki</a>
+      <a href="/profile" class="nav-link">Stats</a>
+      <span class="nav-user"><%= user.username %></span>
+      <form method="POST" action="/logout" style="display:inline">
+        <button type="submit" class="btn btn-sm">Logout</button>
+      </form>
+    </div>
+  </nav>
+  <main class="container">
+    <h2><%= typeof profileUser !== 'undefined' ? profileUser + "'s" : 'Your' %> Stats</h2>
+
+    <% if (stats.gamesPlayed === 0) { %>
+      <p class="muted">No completed games yet. Play some Brass!</p>
+    <% } else { %>
+
+    <!-- Summary cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value"><%= stats.gamesPlayed %></div>
+        <div class="stat-label">Games Played</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value"><%= stats.wins %></div>
+        <div class="stat-label">Wins</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value"><%= stats.gamesPlayed > 0 ? Math.round(stats.wins / stats.gamesPlayed * 100) : 0 %>%</div>
+        <div class="stat-label">Win Rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value"><%= stats.bestVP %></div>
+        <div class="stat-label">Best VP</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value"><%= stats.avgVP %></div>
+        <div class="stat-label">Avg VP</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value"><%= stats.totalVP %></div>
+        <div class="stat-label">Total VP</div>
+      </div>
+    </div>
+
+    <!-- Opponents -->
+    <% if (Object.keys(stats.opponents).length > 0) { %>
+    <h3>Opponents</h3>
+    <table class="wiki-table">
+      <tr><th>Player</th><th>Games</th><th>Your Wins</th><th>Win Rate</th></tr>
+      <% for (const [name, opp] of Object.entries(stats.opponents)) { %>
+        <tr>
+          <td><a href="/profile/<%= name %>"><%= name %></a></td>
+          <td><%= opp.played %></td>
+          <td><%= opp.winsAgainst %></td>
+          <td><%= opp.played > 0 ? Math.round(opp.winsAgainst / opp.played * 100) : 0 %>%</td>
+        </tr>
+      <% } %>
+    </table>
+    <% } %>
+
+    <!-- Recent games -->
+    <h3>Game History</h3>
+    <div class="game-history">
+      <% for (const game of stats.recentGames) { %>
+        <div class="history-card <%= game.won ? 'history-win' : '' %>">
+          <div class="history-header">
+            <strong><%= game.game_name %></strong>
+            <span class="badge <%= game.won ? 'badge-active' : 'badge-finished' %>"><%= game.won ? 'WIN' : 'LOSS' %></span>
+            <span class="muted"><%= game.myVP %> VP</span>
+            <span class="muted"><%= new Date(game.finished_at).toLocaleDateString() %></span>
+          </div>
+          <div class="history-players">
+            <% for (const p of game.players) { %>
+              <span class="history-player <%= p.is_winner ? 'winner' : '' %>">
+                <%= p.username %><%= p.is_bot ? ' (Bot)' : '' %>: <%= p.vp %> VP
+                <%= p.is_winner ? ' *' : '' %>
+              </span>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <% } %>
+  </main>
+</body>
+</html>

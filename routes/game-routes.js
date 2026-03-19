@@ -88,9 +88,10 @@ router.post('/api/games/:id/action', requireLoginAPI, (req, res) => {
   // Log action
   db.addGameAction(gameId, userId, action.type, JSON.stringify(action), gs.version);
 
-  // Update game status if finished
+  // Update game status and record results if finished
   if (result.newState.phase === 'finished') {
     db.updateGame(gameId, { status: 'finished' });
+    recordGameResult(gameId, result.newState);
   }
 
   // Check if next player is a bot
@@ -127,6 +128,28 @@ function sanitizeState(state, userId) {
     }
   }
   return sanitized;
+}
+
+function recordGameResult(gameId, state) {
+  const game = db.findGame(gameId);
+  const maxVP = Math.max(...state.players.map(p => p.vp));
+  const result = {
+    game_id: gameId,
+    game_name: game ? game.name : 'Unknown',
+    finished_at: new Date().toISOString(),
+    era: state.era,
+    players: state.players.map(p => ({
+      user_id: p.userId,
+      username: p.username,
+      seat: p.seat,
+      vp: p.vp,
+      income: p.income,
+      money: p.money,
+      is_winner: p.vp === maxVP,
+      is_bot: p.isBot || false
+    }))
+  };
+  db.addGameResult(result);
 }
 
 module.exports = router;

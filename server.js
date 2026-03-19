@@ -39,10 +39,12 @@ const authRoutes = require('./routes/auth-routes');
 const lobbyRoutes = require('./routes/lobby-routes');
 const gameRoutes = require('./routes/game-routes');
 const wikiRoutes = require('./routes/wiki-routes');
+const profileRoutes = require('./routes/profile-routes');
 
 app.use('/', authRoutes);
 app.use('/', lobbyRoutes);
 app.use('/', gameRoutes);
+app.use('/', profileRoutes);
 app.use('/wiki', wikiRoutes);
 
 // Home redirect
