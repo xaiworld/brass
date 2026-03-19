@@ -14,28 +14,60 @@ const GameUI = {
     this.initFloatingHandResize();
   },
 
+  _sizingCards: false,
+
   sizeFloatingCards() {
+    if (this._sizingCards) return;
+    this._sizingCards = true;
+
     const container = document.getElementById('floating-hand-cards');
-    if (!container) return;
+    if (!container) { this._sizingCards = false; return; }
     const cards = container.querySelectorAll('.card');
-    if (cards.length === 0) return;
-    // Available height = container height
+    if (cards.length === 0) { this._sizingCards = false; return; }
+
     const h = container.clientHeight;
-    if (h <= 0) return;
+    if (h <= 0) { this._sizingCards = false; return; }
+
     // Width from golden ratio
-    const w = Math.round(h / 1.618);
+    let w = Math.round(h / 1.618);
+
+    // Minimum width: measure the longest word in any card + margin
+    let minW = 30;
+    cards.forEach(c => {
+      const label = c.querySelector('.card-label');
+      if (label) {
+        const words = (label.textContent || '').split(/\s+/);
+        words.forEach(word => {
+          // Measure word width using a temp span
+          const span = document.createElement('span');
+          span.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:' + getComputedStyle(label).fontSize + ';font-weight:bold;';
+          span.textContent = word;
+          document.body.appendChild(span);
+          const wordW = span.offsetWidth + 12; // + padding/margin
+          document.body.removeChild(span);
+          if (wordW > minW) minW = wordW;
+        });
+      }
+    });
+
+    if (w < minW) w = minW;
+
     cards.forEach(c => {
       c.style.width = w + 'px';
       c.style.height = h + 'px';
       c.style.minWidth = w + 'px';
       c.style.flex = '0 0 ' + w + 'px';
     });
+
+    this._sizingCards = false;
   },
 
   initFloatingHandResize() {
     const el = document.getElementById('floating-hand');
     if (!el || this._floatResizeObserver) return;
-    this._floatResizeObserver = new ResizeObserver(() => this.sizeFloatingCards());
+    this._floatResizeObserver = new ResizeObserver(() => {
+      if (!this._sizingCards) this.sizeFloatingCards();
+    });
     this._floatResizeObserver.observe(el);
   },
 
