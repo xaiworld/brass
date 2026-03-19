@@ -14,6 +14,44 @@ const GameUI = {
     this.initFloatingHandResize();
   },
 
+  async setBotDelay(seconds) {
+    document.getElementById('bot-delay-val').textContent = seconds;
+    try { await fetch('/api/bot-delay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: parseInt(seconds) }) }); } catch (e) {}
+  },
+
+  lastBotLogCount: 0,
+
+  checkBotAnnouncement() {
+    const logs = gameState.log || [];
+    // Find new bot messages since last check
+    if (logs.length > this.lastBotLogCount) {
+      for (let i = this.lastBotLogCount; i < logs.length; i++) {
+        if (logs[i].bot) {
+          this.showBotOverlay(logs[i].msg);
+        }
+      }
+      this.lastBotLogCount = logs.length;
+    }
+  },
+
+  showBotOverlay(msg) {
+    let overlay = document.getElementById('bot-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'bot-overlay';
+      overlay.className = 'bot-overlay';
+      document.querySelector('.game-main').appendChild(overlay);
+    }
+    overlay.textContent = msg;
+    overlay.style.display = 'block';
+    overlay.style.opacity = '1';
+    clearTimeout(this._botOverlayTimer);
+    this._botOverlayTimer = setTimeout(() => {
+      overlay.style.opacity = '0';
+      setTimeout(() => { overlay.style.display = 'none'; }, 500);
+    }, 3000);
+  },
+
   _sizingCards: false,
 
   sizeFloatingCards() {
@@ -131,6 +169,7 @@ const GameUI = {
     this.updateHand();
     this.updateMat();
     this.updateLog();
+    this.checkBotAnnouncement();
     BoardRenderer.render();
   },
 

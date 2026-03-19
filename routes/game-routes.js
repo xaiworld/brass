@@ -57,6 +57,9 @@ router.get('/api/games/:id/state', requireLoginAPI, (req, res) => {
   if (!gs) return res.status(404).json({ error: 'Game not found' });
 
   if (gs.version === clientVersion) {
+    // While returning 304, also check if a bot should play
+    const botModule = require('../lib/bot-engine');
+    botModule.checkAndPlayBot(gameId);
     return res.status(304).end();
   }
 
@@ -127,6 +130,14 @@ router.get('/api/games/:id/actions', requireLoginAPI, (req, res) => {
   const actions = getValidActions(state, userId);
 
   res.json({ actions });
+});
+
+// API: Set bot delay
+router.post('/api/bot-delay', requireLoginAPI, (req, res) => {
+  const seconds = parseInt(req.body.seconds) || 2;
+  const botModule = require('../lib/bot-engine');
+  botModule.setBotDelay(seconds * 1000);
+  res.json({ ok: true, delay: seconds });
 });
 
 // API: Save custom node positions
