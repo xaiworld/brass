@@ -521,7 +521,7 @@ const GameUI = {
   // ============ HAND ============
 
   handCollapsed: false,
-  handDetached: false,
+  handDetached: true, // floating by default
   hoveredCard: null,
 
   toggleHand() {
@@ -678,13 +678,13 @@ const GameUI = {
     return [...new Set(validLocs)];
   },
 
-  renderCardHTML(cardId, big) {
+  renderCardHTML(cardId) {
     const info = parseCardId(cardId);
     const label = info.type === 'location'
       ? (BOARD.locations[info.location]?.name || info.location)
       : (INDUSTRIES[info.industry]?.name || info.industry);
     const isSelected = this.selectedCard === cardId;
-    return '<div class="card ' + (big ? 'card-big ' : '') + info.type + (isSelected ? ' selected' : '') + '"'
+    return '<div class="card ' + info.type + (isSelected ? ' selected' : '') + '"'
       + ' onclick="GameUI.selectCard(\'' + cardId + '\')"'
       + ' onmouseenter="GameUI.onCardHover(\'' + cardId + '\', event)"'
       + ' onmouseleave="GameUI.onCardLeave()">'
@@ -707,19 +707,18 @@ const GameUI = {
     // cardsHTML no longer used directly; built per context below
 
     const floatCheck = '<label class="float-check" onclick="event.stopPropagation()"><input type="checkbox" ' + (this.handDetached ? 'checked' : '') + ' onchange="GameUI.toggleDetachHand()"> Float</label>';
-    const smallCardsHTML = myPlayer.hand.map(c => this.renderCardHTML(c, false)).join('');
-    const bigCardsHTML = myPlayer.hand.map(c => this.renderCardHTML(c, true)).join('');
+    const cardsHTML = myPlayer.hand.map(c => this.renderCardHTML(c)).join('');
 
     if (this.handDetached) {
       panel.innerHTML = '<h4 class="collapsible-header" onclick="GameUI.toggleHand()">Hand (' + myPlayer.hand.length + ') ' + floatCheck + '</h4>';
-      if (floatCards) floatCards.innerHTML = bigCardsHTML;
+      if (floatCards) floatCards.innerHTML = cardsHTML;
     } else {
       const arrow = this.handCollapsed ? '&#9654;' : '&#9660;';
       panel.innerHTML = '<h4 class="collapsible-header" onclick="GameUI.toggleHand()">'
         + 'Hand (' + myPlayer.hand.length + ') <span class="collapse-arrow">' + arrow + '</span> '
         + floatCheck
         + '</h4>'
-        + (this.handCollapsed ? '' : '<div class="hand-cards">' + smallCardsHTML + '</div>');
+        + (this.handCollapsed ? '' : '<div class="hand-cards">' + cardsHTML + '</div>');
       if (floatCards) floatCards.innerHTML = '';
     }
   },

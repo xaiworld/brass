@@ -924,7 +924,9 @@ const BoardRenderer = {
       this.marketDefaults[d.id] = { x: newX, y: newY };
     }
 
-    this.customPositions[d.id] = { x: newX, y: newY };
+    // Preserve existing scale when moving
+    const existing = this.customPositions[d.id];
+    this.customPositions[d.id] = { x: newX, y: newY, scale: (existing && existing.scale) || undefined };
     this.render();
   },
 

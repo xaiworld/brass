@@ -307,9 +307,9 @@ a:hover { text-decoration: underline; }
 /* Hand */
 .hand-cards { display: flex; flex-wrap: wrap; gap: 3px; }
 .card {
-  width: 42px;
-  height: 68px; /* golden ratio ~1.618 */
-  padding: 3px 4px;
+  width: 48px;
+  height: 78px; /* golden ratio ~1.618 */
+  padding: 4px;
   border-radius: 4px;
   border: 2px solid #555;
   cursor: pointer;
@@ -321,13 +321,9 @@ a:hover { text-decoration: underline; }
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  box-sizing: border-box;
 }
-.card.card-big {
-  width: 52px;
-  height: 84px; /* golden ratio */
-  padding: 4px 5px;
-  border-radius: 5px;
-}
+/* No separate card-big sizing — all cards same size */
 .card:hover { border-color: var(--gold); background: var(--surface-light); }
 .card.selected { border-color: var(--gold); background: var(--surface-light); box-shadow: 0 0 8px var(--gold); }
 .card.location { background: #2a3a2a; }
@@ -338,7 +334,6 @@ a:hover { text-decoration: underline; }
   overflow-wrap: break-word; word-break: normal; /* never split a word */
   line-height: 1.15; max-width: 100%;
 }
-.card-big .card-label { font-size: 10px; }
 
 /* Floating hand */
 .floating-hand {
@@ -353,11 +348,7 @@ a:hover { text-decoration: underline; }
   z-index: 30;
   box-shadow: 0 4px 20px rgba(0,0,0,0.6);
   max-width: 90vw;
-  resize: both;
-  overflow: auto;
-  min-width: 140px;
-  min-height: 60px;
-  width: auto;
+  overflow: visible;
 }
 .floating-hand-header { cursor: move; }
 .float-check {
@@ -370,16 +361,7 @@ a:hover { text-decoration: underline; }
   margin-bottom: 4px; font-size: 11px; color: var(--gold);
 }
 .floating-hand-cards {
-  display: flex; gap: 4px; overflow-x: auto;
-  height: calc(100% - 24px); /* fill below header */
-  align-items: stretch;
-}
-.floating-hand-cards .card.card-big {
-  height: 100%;
-  width: auto;
-  min-width: 52px;
-  aspect-ratio: 1 / 1.618; /* golden ratio, height > width */
-  padding: 4px 6px;
+  display: flex; gap: 4px;
 }
 
 /* Action popup (on card hover) */
@@ -443,12 +425,12 @@ a:hover { text-decoration: underline; }
 .mat-tile-box.tile-used { border-color: #444; background: #222; opacity: 0.35; }
 .tile-num { font-weight: bold; font-size: 9px; line-height: 1; }
 
-/* VP hexagon (pink) */
+/* VP hexagon (pink) — uses inline SVG background for outline support */
 .tile-vp-hex {
   display: inline-flex; align-items: center; justify-content: center;
   width: 14px; height: 13px; font-size: 7px; font-weight: bold;
-  background: #cc3366; color: #fff; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  line-height: 1;
+  color: #fff; line-height: 1; position: relative;
+  background: #cc3366; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
 .tile-vp-inline { width: 16px; height: 15px; font-size: 8px; vertical-align: middle; }
 
@@ -462,13 +444,11 @@ a:hover { text-decoration: underline; }
 .tile-inc-inline { width: 16px; height: 16px; font-size: 7px; vertical-align: middle; }
 
 /* Minimal mode: transparent backgrounds, colored outlines */
-body.minimal-mode .tile-vp-hex {
-  background: transparent; color: #cc3366;
-  filter: drop-shadow(0 0 1px #cc3366) drop-shadow(0 0 0.5px #cc3366);
-}
+body.minimal-mode .tile-vp-hex,
 body.minimal-mode .tile-vp-inline {
-  background: transparent; color: #cc3366;
-  filter: drop-shadow(0 0 1px #cc3366) drop-shadow(0 0 0.5px #cc3366);
+  background: transparent; color: #cc3366; clip-path: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 15'%3E%3Cpolygon points='8,0.5 15.5,3.75 15.5,11.25 8,14.5 0.5,11.25 0.5,3.75' fill='none' stroke='%23cc3366' stroke-width='1.2'/%3E%3C/svg%3E");
+  background-size: contain; background-repeat: no-repeat; background-position: center;
 }
 body.minimal-mode .tile-inc-circle { background: transparent; color: #e08030; border: 1.5px solid #e08030; }
 body.minimal-mode .money-disc.silver { background: transparent; color: #C0C0C0; border-color: #C0C0C0; }
