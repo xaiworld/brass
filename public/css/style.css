@@ -77,6 +77,8 @@ a:hover { text-decoration: underline; }
 .form-row { display: flex; gap: 12px; }
 .form-row .form-group { flex: 1; }
 .error { color: var(--accent); margin-bottom: 12px; font-size: 13px; }
+.checkbox-group label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; }
+.checkbox-group input[type="checkbox"] { width: auto; }
 .muted { color: var(--text-muted); font-size: 13px; }
 
 /* Lobby */

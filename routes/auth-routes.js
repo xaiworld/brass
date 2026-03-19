@@ -21,6 +21,15 @@ router.post('/login', async (req, res) => {
   }
 
   req.session.user = { id: user.id, username: user.username };
+
+  if (req.body.remember) {
+    // Stay logged in for 1 year
+    req.session.cookie.maxAge = 365 * 24 * 60 * 60 * 1000;
+  } else {
+    // Session cookie - expires when browser closes
+    req.session.cookie.expires = false;
+  }
+
   res.redirect('/lobby');
 });
 
