@@ -365,6 +365,15 @@ a:hover { text-decoration: underline; }
 }
 .floating-hand-cards {
   display: flex; gap: 4px;
+  height: calc(100% - 28px); /* fill below header */
+  align-items: stretch;
+}
+.floating-hand-cards .card {
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1 / 1.618;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* Action popup (on card hover) */
