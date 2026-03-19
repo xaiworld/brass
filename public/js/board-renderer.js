@@ -871,13 +871,41 @@ const BoardRenderer = {
       }
 
       if (!this.hideIcons) {
-        this.createAndAppend('text', {
-          x: cx, y: cy + 2.5,
-          'text-anchor': 'middle',
-          'font-size': isDual ? '5' : '6',
-          fill: '#8b7355aa',
-          'pointer-events': 'none'
-        }).textContent = allowed.map(t => BOARD.industryIcons[t] || '?').join('/');
+        const iconColors = {
+          cottonMill: '#8b7355aa',
+          coalMine:   '#bbbbbbaa', // lighter for dark bg
+          ironWorks:  '#8b7355aa',
+          port:       '#8b7355aa',
+          shipyard:   '#8b7355aa'
+        };
+        if (isDual) {
+          // Render each icon with its own color
+          const icon1 = BOARD.industryIcons[allowed[0]] || '?';
+          const icon2 = BOARD.industryIcons[allowed[1]] || '?';
+          const fs = '5';
+          this.createAndAppend('text', {
+            x: cx - 3, y: cy + 2.5,
+            'text-anchor': 'middle', 'font-size': fs,
+            fill: iconColors[allowed[0]] || '#8b7355aa', 'pointer-events': 'none'
+          }).textContent = icon1;
+          this.createAndAppend('text', {
+            x: cx, y: cy + 2.5,
+            'text-anchor': 'middle', 'font-size': fs,
+            fill: '#8b735566', 'pointer-events': 'none'
+          }).textContent = '/';
+          this.createAndAppend('text', {
+            x: cx + 3, y: cy + 2.5,
+            'text-anchor': 'middle', 'font-size': fs,
+            fill: iconColors[allowed[1]] || '#8b7355aa', 'pointer-events': 'none'
+          }).textContent = icon2;
+        } else {
+          this.createAndAppend('text', {
+            x: cx, y: cy + 2.5,
+            'text-anchor': 'middle', 'font-size': '6',
+            fill: iconColors[allowed[0]] || '#8b7355aa',
+            'pointer-events': 'none'
+          }).textContent = BOARD.industryIcons[allowed[0]] || '?';
+        }
       }
     }
   },
