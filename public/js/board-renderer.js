@@ -37,10 +37,6 @@ const BoardRenderer = {
         BOARD.nonBuildable[locId].x = pos.x;
         BOARD.nonBuildable[locId].y = pos.y;
       }
-      if (BOARD.externalPorts[locId]) {
-        BOARD.externalPorts[locId].x = pos.x;
-        BOARD.externalPorts[locId].y = pos.y;
-      }
     }
   },
 
@@ -65,11 +61,8 @@ const BoardRenderer = {
     // Draw links
     this.drawLinks();
 
-    // Draw non-buildable waypoints
+    // Draw non-buildable locations (including external ports)
     this.drawNonBuildable();
-
-    // Draw external ports
-    this.drawExternalPorts();
 
     // Draw locations as rectangles
     this.drawLocations();
@@ -86,8 +79,8 @@ const BoardRenderer = {
     const era = state.era;
 
     for (const link of BOARD.links) {
-      const from = BOARD.locations[link.from];
-      const to = BOARD.locations[link.to];
+      const from = BOARD.locations[link.from] || BOARD.nonBuildable[link.from];
+      const to = BOARD.locations[link.to] || BOARD.nonBuildable[link.to];
       if (!from || !to) continue;
 
       const linkState = state.board.links[link.id];
@@ -136,59 +129,46 @@ const BoardRenderer = {
 
   drawNonBuildable() {
     for (const [id, wp] of Object.entries(BOARD.nonBuildable)) {
-      const diamond = this.createSVG('polygon', {
-        points: `${wp.x},${wp.y-6} ${wp.x+6},${wp.y} ${wp.x},${wp.y+6} ${wp.x-6},${wp.y}`,
-        fill: this.editMode ? '#555588aa' : '#33333388',
-        stroke: this.editMode ? '#ffcc00' : '#66666688',
-        'stroke-width': 1
-      });
-      diamond.addEventListener('mousedown', (e) => this.onDragStart(e, id, 'nonBuildable'));
-      this.svg.appendChild(diamond);
+      const isEP = wp.isExternalPort;
 
-      const text = this.createSVG('text', {
-        x: wp.x, y: wp.y + 14,
-        'text-anchor': 'middle',
-        'font-size': '6',
-        fill: '#aaa',
-        'font-style': 'italic',
-        'pointer-events': 'none'
-      });
-      text.textContent = wp.name;
-      this.svg.appendChild(text);
-    }
-  },
-
-  drawExternalPorts() {
-    for (const [id, port] of Object.entries(BOARD.externalPorts)) {
-      // Dashed lines to connected locations
-      for (const locId of port.connectedTo) {
-        const loc = BOARD.locations[locId];
-        if (!loc) continue;
-        this.createAndAppend('line', {
-          x1: port.x, y1: port.y, x2: loc.x, y2: loc.y,
-          stroke: '#4488cc33', 'stroke-width': 1, 'stroke-dasharray': '3,3'
+      if (isEP) {
+        // External port: circle with "E" marker
+        const circle = this.createAndAppend('circle', {
+          cx: wp.x, cy: wp.y, r: 10,
+          fill: '#1a2a3acc',
+          stroke: this.editMode ? '#ffcc00' : '#4488cc',
+          'stroke-width': 1.5
         });
+        circle.addEventListener('mousedown', (e) => this.onDragStart(e, id, 'nonBuildable'));
+
+        this.createAndAppend('text', {
+          x: wp.x, y: wp.y + 3,
+          'text-anchor': 'middle', 'font-size': '8', fill: '#88ccff',
+          'font-weight': 'bold', 'pointer-events': 'none'
+        }).textContent = 'E';
+
+        this.createAndAppend('text', {
+          x: wp.x, y: wp.y + 19,
+          'text-anchor': 'middle', 'font-size': '7', fill: '#88ccff',
+          'pointer-events': 'none'
+        }).textContent = wp.name;
+      } else {
+        // Non-buildable waypoint: diamond
+        const diamond = this.createSVG('polygon', {
+          points: `${wp.x},${wp.y-6} ${wp.x+6},${wp.y} ${wp.x},${wp.y+6} ${wp.x-6},${wp.y}`,
+          fill: this.editMode ? '#555588aa' : '#33333388',
+          stroke: this.editMode ? '#ffcc00' : '#66666688',
+          'stroke-width': 1
+        });
+        diamond.addEventListener('mousedown', (e) => this.onDragStart(e, id, 'nonBuildable'));
+        this.svg.appendChild(diamond);
+
+        this.createAndAppend('text', {
+          x: wp.x, y: wp.y + 14,
+          'text-anchor': 'middle', 'font-size': '6', fill: '#aaa',
+          'font-style': 'italic', 'pointer-events': 'none'
+        }).textContent = wp.name;
       }
-
-      const epCircle = this.createAndAppend('circle', {
-        cx: port.x, cy: port.y, r: 10,
-        fill: '#1a2a3acc',
-        stroke: this.editMode ? '#ffcc00' : '#4488cc',
-        'stroke-width': 1.5
-      });
-      epCircle.addEventListener('mousedown', (e) => this.onDragStart(e, id, 'externalPort'));
-
-      this.createAndAppend('text', {
-        x: port.x, y: port.y + 3,
-        'text-anchor': 'middle', 'font-size': '8', fill: '#88ccff',
-        'font-weight': 'bold', 'pointer-events': 'none'
-      }).textContent = 'E';
-
-      this.createAndAppend('text', {
-        x: port.x, y: port.y + 18,
-        'text-anchor': 'middle', 'font-size': '7', fill: '#88ccff',
-        'pointer-events': 'none'
-      }).textContent = port.name;
     }
   },
 
@@ -455,10 +435,6 @@ const BoardRenderer = {
     for (const [id, wp] of Object.entries(BOARD_DEFAULTS.nonBuildable)) {
       BOARD.nonBuildable[id].x = wp.x;
       BOARD.nonBuildable[id].y = wp.y;
-    }
-    for (const [id, ep] of Object.entries(BOARD_DEFAULTS.externalPorts)) {
-      BOARD.externalPorts[id].x = ep.x;
-      BOARD.externalPorts[id].y = ep.y;
     }
     this.render();
     try {

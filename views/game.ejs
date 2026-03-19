@@ -37,11 +37,14 @@
         <svg id="game-board" viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
 
-      <!-- Right panel: actions + hand + mat -->
-      <div class="right-panel">
-        <div class="panel-section" id="action-panel"></div>
-        <div class="panel-section" id="hand-panel"></div>
-        <div class="panel-section" id="mat-panel"></div>
+      <!-- Right panel: actions + hand + mat (collapsible) -->
+      <div class="right-panel" id="right-panel">
+        <div class="right-panel-toggle" onclick="GameUI.toggleRightPanel()"><span id="right-panel-arrow">&#9654;</span></div>
+        <div class="right-panel-content" id="right-panel-content">
+          <div class="panel-section" id="action-panel"></div>
+          <div class="panel-section" id="hand-panel"></div>
+          <div class="panel-section" id="mat-panel"></div>
+        </div>
       </div>
     </div>
 

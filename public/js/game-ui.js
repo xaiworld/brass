@@ -4,6 +4,7 @@ const GameUI = {
   selectedCard: null,
   actionStep: 0,
   actionParams: {},
+  rightPanelCollapsed: false,
 
   init() {
     BoardRenderer.init();
@@ -522,24 +523,63 @@ const GameUI = {
   },
 
   onCardHover(cardId) {
+    if (this.selectedAction) return; // don't interfere with action flow
     BoardRenderer.clearHighlights();
     const info = parseCardId(cardId);
     if (info.type === 'location') {
-      // Highlight the matching location
       if (BOARD.locations[info.location]) {
         BoardRenderer.highlightLocations([info.location], () => {});
       }
     } else if (info.type === 'industry') {
-      // Highlight all locations where this industry can be built given rules + resources + money
       const validLocs = this.getValidBuildLocations(info.industry);
       if (validLocs.length > 0) {
         BoardRenderer.highlightLocations(validLocs, () => {});
       }
     }
+    // Show action hints
+    this.showActionHints(cardId, info);
   },
 
   onCardLeave() {
+    if (this.selectedAction) return;
     BoardRenderer.clearHighlights();
+    this.hideActionHints();
+  },
+
+  showActionHints(cardId, info) {
+    let existing = document.getElementById('action-hints');
+    if (!existing) {
+      existing = document.createElement('div');
+      existing.id = 'action-hints';
+      existing.className = 'action-hints';
+      const actionPanel = document.getElementById('action-panel');
+      if (actionPanel) actionPanel.appendChild(existing);
+    }
+    const hints = [];
+    const myPlayer = gameState.players.find(p => p.userId === USER_ID);
+    if (!myPlayer) return;
+
+    if (info.type === 'location') {
+      const loc = BOARD.locations[info.location];
+      if (loc) hints.push(`<div class="action-hint"><strong>Build Industry</strong> at ${loc.name}</div>`);
+    } else {
+      const validLocs = this.getValidBuildLocations(info.industry);
+      if (validLocs.length > 0) {
+        hints.push(`<div class="action-hint"><strong>Build ${INDUSTRIES[info.industry]?.name}</strong> at ${validLocs.length} location${validLocs.length > 1 ? 's' : ''}</div>`);
+      }
+    }
+    hints.push(`<div class="action-hint"><strong>Build Link</strong> — discard to build canal/rail</div>`);
+    hints.push(`<div class="action-hint"><strong>Sell Cotton</strong> — discard to sell mills</div>`);
+    hints.push(`<div class="action-hint"><strong>Take Loan</strong> — discard for £10-30</div>`);
+    hints.push(`<div class="action-hint"><strong>Develop</strong> — discard + iron to skip tiles</div>`);
+    hints.push(`<div class="action-hint"><strong>Pass</strong> — discard and do nothing</div>`);
+    hints.push(`<div class="action-hint"><strong>Wild Build</strong> — use 2 actions + 2 cards to build anywhere</div>`);
+    existing.innerHTML = hints.join('');
+  },
+
+  hideActionHints() {
+    const el = document.getElementById('action-hints');
+    if (el) el.remove();
   },
 
   getValidBuildLocations(industryType) {
@@ -606,10 +646,24 @@ const GameUI = {
   // ============ INDUSTRY MAT ============
 
   matCollapsed: false,
+  matDetailVisible: true,
 
   toggleMat() {
     this.matCollapsed = !this.matCollapsed;
     this.updateMat();
+  },
+
+  toggleMatDetail() {
+    this.matDetailVisible = !this.matDetailVisible;
+    this.updateMat();
+  },
+
+  toggleRightPanel() {
+    this.rightPanelCollapsed = !this.rightPanelCollapsed;
+    const panel = document.getElementById('right-panel');
+    const arrow = document.getElementById('right-panel-arrow');
+    panel.classList.toggle('collapsed');
+    arrow.innerHTML = this.rightPanelCollapsed ? '&#9664;' : '&#9654;';
   },
 
   updateMat() {
@@ -618,26 +672,42 @@ const GameUI = {
     if (!myPlayer) { panel.innerHTML = ''; return; }
 
     const arrow = this.matCollapsed ? '&#9654;' : '&#9660;';
+    const showDetail = this.matDetailVisible;
     panel.innerHTML = `
-      <h4 class="collapsible-header" onclick="GameUI.toggleMat()">Industry Mat <span class="collapse-arrow">${arrow}</span></h4>
-      ${this.matCollapsed ? '' : `<div class="mat-tiles">
+      <h4 class="collapsible-header" onclick="GameUI.toggleMat()">
+        Industry Mat <span class="collapse-arrow">${arrow}</span>
+      </h4>
+      ${this.matCollapsed ? '' : `
+        <div style="text-align:right;margin-bottom:3px">
+          <span class="muted" style="font-size:9px;cursor:pointer" onclick="GameUI.toggleMatDetail()">${showDetail ? 'Hide' : 'Show'} detail</span>
+        </div>
+        <div class="mat-tiles">
         ${Object.entries(myPlayer.industryMat).map(([type, levels]) => {
           const ind = INDUSTRIES[type];
           if (!ind) return '';
           const topLevel = levels[0];
           const tileData = topLevel !== undefined ? ind.levels[topLevel] : null;
+          // Group by level and count duplicates
+          const levelCounts = {};
+          for (const l of levels) { levelCounts[l] = (levelCounts[l] || 0) + 1; }
           return `<div class="mat-group">
             <div class="mat-header">
               <span class="mat-name">${ind.name}</span>
               <span class="mat-count">${levels.length} tile${levels.length !== 1 ? 's' : ''}</span>
             </div>
             ${levels.length > 0 ? `
-              <div class="mat-levels-row">
-                ${levels.map(l => {
-                  const ld = ind.levels[l];
-                  return `<span class="mat-tile" title="L${l}: £${ld.cost}${ld.coal ? ' +' + ld.coal + ' coal' : ''}${ld.iron ? ' +' + ld.iron + ' iron' : ''} → +${ld.income} inc, ${ld.vp} VP${ld.cubes ? ', ' + ld.cubes + ' cubes' : ''}">L${l}</span>`;
-                }).join(' ')}
-              </div>
+              ${showDetail ? Object.entries(levelCounts).map(([l, count]) => {
+                const ld = ind.levels[l];
+                const isTop = parseInt(l) === topLevel;
+                return `<div class="mat-level-row ${isTop ? 'top-tile' : ''}">
+                  <span class="mat-level-label">L${l}${count > 1 ? ' x' + count : ''}</span>
+                  <span class="mat-level-info">£${ld.cost}${ld.coal ? ' +' + ld.coal + 'co' : ''}${ld.iron ? ' +' + ld.iron + 'ir' : ''} → +${ld.income}inc ${ld.vp}VP${ld.cubes ? ' ' + ld.cubes + 'cb' : ''}</span>
+                </div>`;
+              }).join('') : `<div class="mat-levels-row">
+                ${Object.entries(levelCounts).map(([l, count]) =>
+                  `<span class="mat-tile">L${l}${count > 1 ? 'x' + count : ''}</span>`
+                ).join(' ')}
+              </div>`}
               ${tileData ? `<div class="mat-detail">
                 Next: L${topLevel} — £${tileData.cost}${tileData.coal ? ' +' + tileData.coal + '⬛' : ''}${tileData.iron ? ' +' + tileData.iron + '🟧' : ''} → +${tileData.income} inc, ${tileData.vp} VP
               </div>` : ''}
