@@ -67,7 +67,7 @@ const BOARD = {
     { id: 'macclesfield-theMidlands', from: 'macclesfield', to: 'theMidlands', canal: true, rail: true, segments: 2 }
   ],
 
-  playerColors: ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'],
+  playerColors: ['#e74c3c', '#9b59b6', '#2ecc71', '#f39c12'],
   industryIcons: {
     cottonMill: 'C',
     coalMine: 'Co',

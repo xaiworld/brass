@@ -60,17 +60,21 @@ const GameUI = {
     bar.innerHTML = state.players.map(p => {
       const isCurrent = p.seat === currentSeat && state.phase === 'actions';
       const isMe = p.userId === USER_ID;
+      const fives = Math.floor(p.money / 5);
+      const ones = p.money % 5;
+      const moneyDiscs = (fives > 6
+        ? '<span class="money-disc silver">' + fives + '</span>'
+        : Array(fives).fill('<span class="money-disc silver">5</span>').join(''))
+        + Array(ones).fill('<span class="money-disc bronze">1</span>').join('');
       return `
         <div class="player-info ${isCurrent ? 'current' : ''} ${isMe ? 'me' : ''}"
              style="border-color: ${BOARD.playerColors[p.seat]}">
           <div class="player-name" style="color: ${BOARD.playerColors[p.seat]}">
             ${p.username}${p.isBot ? ' (Bot)' : ''}
-            ${isCurrent ? ' *' : ''}
+            ${isCurrent ? ' ▸' : ''}
           </div>
+          <div class="money-discs" title="£${p.money}">${moneyDiscs}</div>
           <div class="player-stats">
-            <span title="Money">£${p.money}</span>
-            <span title="Income">Inc: ${p.income}</span>
-            <span title="Victory Points">VP: ${p.vp}</span>
             <span title="Cards">${p.hand ? p.hand.length : p.handCount || 0} cards</span>
           </div>
         </div>

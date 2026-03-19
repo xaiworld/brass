@@ -177,9 +177,13 @@ const BoardRenderer = {
 
   // Default positions for market panels (draggable)
   marketDefaults: {
-    demandPanel:  { x: 573, y: 380 },
-    coalPanel:    { x: 30,  y: 80 },
-    ironPanel:    { x: 30,  y: 140 }
+    turnOrderPanel:  { x: 573, y: 240 },
+    moneySpentPanel: { x: 573, y: 310 },
+    demandPanel:     { x: 573, y: 400 },
+    vpPanel:         { x: 25,  y: 20 },
+    coalPanel:       { x: 20,  y: 80 },
+    ironPanel:       { x: 48,  y: 80 },
+    incomePanel:     { x: 30,  y: 210 }
   },
 
   getMarketPos(id) {
@@ -190,12 +194,15 @@ const BoardRenderer = {
     const state = gameState;
     const slotPrices = [1, 1, 2, 2, 3, 3, 4, 4];
 
-    // Demand panel
+    // Right side: turn order, money spent, demand
+    this.drawTurnOrderPanel(state);
+    this.drawMoneySpentPanel(state);
     this.drawDemandPanel(state);
-    // Coal panel
+    // Left side: VP, coal+iron, income
+    this.drawVPPanel(state);
     this.drawResourcePanel('coalPanel', 'COAL', state.coalMarket, '#555', '#aaa', slotPrices);
-    // Iron panel
     this.drawResourcePanel('ironPanel', 'IRON', state.ironMarket, '#d4740e', '#ffc080', slotPrices);
+    this.drawIncomePanel(state);
   },
 
   drawDemandPanel(state) {
@@ -286,6 +293,214 @@ const BoardRenderer = {
         'text-anchor': 'start', 'font-size': '5', fill: '#888',
         'pointer-events': 'none'
       }).textContent = '£' + price;
+    }
+  },
+
+  drawTurnOrderPanel(state) {
+    const pos = this.getMarketPos('turnOrderPanel');
+    const numPlayers = state.players.length;
+    const rowH = 12;
+    const panelH = numPlayers * rowH + 14;
+    const panelW = 55;
+
+    const bg = this.createAndAppend('rect', {
+      x: pos.x - panelW/2, y: pos.y - 6,
+      width: panelW, height: panelH,
+      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
+    });
+    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'turnOrderPanel', 'market'));
+
+    this.createAndAppend('text', {
+      x: pos.x, y: pos.y + 2,
+      'text-anchor': 'middle', 'font-size': '5', fill: '#ccc',
+      'font-weight': 'bold', 'pointer-events': 'none'
+    }).textContent = 'TURN ORDER';
+
+    const currentSeat = state.turnOrder[state.currentPlayerIndex];
+    for (let i = 0; i < state.turnOrder.length; i++) {
+      const seat = state.turnOrder[i];
+      const p = state.players[seat];
+      const y = pos.y + 8 + i * rowH;
+      const isCurrent = seat === currentSeat;
+
+      this.createAndAppend('rect', {
+        x: pos.x - panelW/2 + 3, y: y - 4,
+        width: 8, height: 8, rx: 1,
+        fill: BOARD.playerColors[seat],
+        stroke: isCurrent ? '#fff' : 'none', 'stroke-width': isCurrent ? 1.5 : 0
+      });
+      this.createAndAppend('text', {
+        x: pos.x - panelW/2 + 14, y: y + 3,
+        'text-anchor': 'start', 'font-size': '6',
+        fill: isCurrent ? '#fff' : '#aaa',
+        'font-weight': isCurrent ? 'bold' : 'normal',
+        'pointer-events': 'none'
+      }).textContent = (isCurrent ? '▸ ' : '') + (p.username || '').substring(0, 8);
+    }
+  },
+
+  drawMoneySpentPanel(state) {
+    const pos = this.getMarketPos('moneySpentPanel');
+    const numPlayers = state.players.length;
+    const rowH = 12;
+    const panelH = numPlayers * rowH + 14;
+    const panelW = 60;
+
+    const bg = this.createAndAppend('rect', {
+      x: pos.x - panelW/2, y: pos.y - 6,
+      width: panelW, height: panelH,
+      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
+    });
+    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'moneySpentPanel', 'market'));
+
+    this.createAndAppend('text', {
+      x: pos.x, y: pos.y + 2,
+      'text-anchor': 'middle', 'font-size': '5', fill: '#ccc',
+      'font-weight': 'bold', 'pointer-events': 'none'
+    }).textContent = 'SPENT';
+
+    for (let i = 0; i < state.turnOrder.length; i++) {
+      const seat = state.turnOrder[i];
+      const p = state.players[seat];
+      const spent = p.spentThisRound || 0;
+      const y = pos.y + 8 + i * rowH;
+
+      // Player color square
+      this.createAndAppend('rect', {
+        x: pos.x - panelW/2 + 3, y: y - 4,
+        width: 6, height: 6, rx: 1,
+        fill: BOARD.playerColors[seat]
+      });
+
+      // Silver £5 discs and bronze £1 discs
+      const fives = Math.floor(spent / 5);
+      const ones = spent % 5;
+      let dx = pos.x - panelW/2 + 12;
+      for (let d = 0; d < Math.min(fives, 8); d++) {
+        this.createAndAppend('circle', {
+          cx: dx + d * 6, cy: y - 1, r: 2.5,
+          fill: '#C0C0C0', stroke: '#888', 'stroke-width': 0.3
+        });
+      }
+      if (fives > 8) {
+        this.createAndAppend('text', {
+          x: dx + 48, y: y + 2,
+          'font-size': '4', fill: '#C0C0C0', 'pointer-events': 'none'
+        }).textContent = fives + 'x';
+      }
+      dx += Math.min(fives, 8) * 6 + 2;
+      for (let d = 0; d < ones; d++) {
+        this.createAndAppend('circle', {
+          cx: dx + d * 5, cy: y - 1, r: 2,
+          fill: '#CD7F32', stroke: '#8B5A2B', 'stroke-width': 0.3
+        });
+      }
+    }
+  },
+
+  drawVPPanel(state) {
+    const pos = this.getMarketPos('vpPanel');
+    const numPlayers = state.players.length;
+    const colW = 28;
+    const panelW = numPlayers * colW + 4;
+    const panelH = 28;
+
+    const bg = this.createAndAppend('rect', {
+      x: pos.x - 2, y: pos.y - 6,
+      width: panelW, height: panelH,
+      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
+    });
+    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'vpPanel', 'market'));
+
+    for (let i = 0; i < state.players.length; i++) {
+      const p = state.players[i];
+      const cx = pos.x + i * colW + colW/2;
+
+      // Colored square with VP
+      this.createAndAppend('rect', {
+        x: cx - 9, y: pos.y - 2,
+        width: 18, height: 14, rx: 2,
+        fill: BOARD.playerColors[p.seat], stroke: '#fff', 'stroke-width': 0.5
+      });
+      this.createAndAppend('text', {
+        x: cx, y: pos.y + 8,
+        'text-anchor': 'middle', 'font-size': '8', fill: '#fff',
+        'font-weight': 'bold', 'pointer-events': 'none'
+      }).textContent = p.vp;
+      // Name below
+      this.createAndAppend('text', {
+        x: cx, y: pos.y + 18,
+        'text-anchor': 'middle', 'font-size': '4', fill: '#aaa',
+        'pointer-events': 'none'
+      }).textContent = (p.username || '').substring(0, 6);
+    }
+  },
+
+  drawIncomePanel(state) {
+    const pos = this.getMarketPos('incomePanel');
+    const boxSize = 5;
+    const gap = 1;
+    const cols = 10;
+    const rows = 10; // 0-99
+    const panelW = cols * (boxSize + gap) + 8;
+    const panelH = rows * (boxSize + gap) + 14;
+
+    const bg = this.createAndAppend('rect', {
+      x: pos.x - 4, y: pos.y - 6,
+      width: panelW, height: panelH,
+      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
+    });
+    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'incomePanel', 'market'));
+
+    this.createAndAppend('text', {
+      x: pos.x + panelW/2 - 4, y: pos.y + 2,
+      'text-anchor': 'middle', 'font-size': '5', fill: '#ccc',
+      'font-weight': 'bold', 'pointer-events': 'none'
+    }).textContent = 'INCOME';
+
+    // Player income positions
+    const playerIncomes = {};
+    for (const p of state.players) {
+      if (!playerIncomes[p.income]) playerIncomes[p.income] = [];
+      playerIncomes[p.income].push(p.seat);
+    }
+
+    // Draw serpentine track
+    const startY = pos.y + 8;
+    for (let num = 0; num < 100; num++) {
+      const row = Math.floor(num / cols);
+      const colInRow = num % cols;
+      // Serpentine: even rows left-to-right, odd rows right-to-left
+      const col = row % 2 === 0 ? colInRow : (cols - 1 - colInRow);
+      const bx = pos.x + col * (boxSize + gap);
+      const by = startY + row * (boxSize + gap);
+
+      const hasPlayers = playerIncomes[num];
+      this.createAndAppend('rect', {
+        x: bx, y: by, width: boxSize, height: boxSize,
+        fill: hasPlayers ? BOARD.playerColors[hasPlayers[0]] : '#222',
+        stroke: hasPlayers ? '#fff' : '#444', 'stroke-width': hasPlayers ? 0.8 : 0.3,
+        rx: 0.5
+      });
+
+      // Show number every 10
+      if (num % 10 === 0) {
+        this.createAndAppend('text', {
+          x: bx + boxSize/2, y: by + boxSize/2 + 1.5,
+          'text-anchor': 'middle', 'font-size': '3', fill: '#888',
+          'pointer-events': 'none'
+        }).textContent = num;
+      }
+
+      // If multiple players on same spot, show additional markers
+      if (hasPlayers && hasPlayers.length > 1) {
+        for (let pi = 1; pi < hasPlayers.length; pi++) {
+          this.createAndAppend('circle', {
+            cx: bx + boxSize - 1, cy: by + 1 + pi * 2, r: 1,
+            fill: BOARD.playerColors[hasPlayers[pi]]
+          });
+        }
+      }
     }
   },
 

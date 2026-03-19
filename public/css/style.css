@@ -150,6 +150,14 @@ a:hover { text-decoration: underline; }
 .player-info.current { background: var(--surface-light); }
 .player-info.me { box-shadow: 0 0 0 1px var(--gold); }
 .player-name { font-weight: bold; font-size: 11px; }
+.money-discs { display: flex; flex-wrap: wrap; gap: 1px; margin: 2px 0; }
+.money-disc {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  font-size: 7px; font-weight: bold; line-height: 1;
+}
+.money-disc.silver { background: #C0C0C0; color: #333; border: 1px solid #999; }
+.money-disc.bronze { background: #CD7F32; color: #fff; border: 1px solid #8B5A2B; }
 .player-stats {
   display: flex; flex-wrap: wrap; gap: 6px;
   font-size: 10px; color: var(--text-muted); margin-top: 1px;
