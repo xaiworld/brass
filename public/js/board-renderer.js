@@ -367,11 +367,14 @@ const BoardRenderer = {
 
       // "No more demand" label at level 0
       if (level === 0) {
-        this.createAndAppend('text', {
-          x: pos.x + w/2 + 3, y: y + 3,
-          'text-anchor': 'start', 'font-size': '4', fill: '#e94560',
-          'font-style': 'italic', 'pointer-events': 'none'
-        }).textContent = 'No more demand';
+        const lines = ['No', 'more', 'demand'];
+        for (let li = 0; li < lines.length; li++) {
+          this.createAndAppend('text', {
+            x: pos.x + 10, y: y - 4 + li * 6,
+            'text-anchor': 'middle', 'font-size': '4', fill: '#ccc',
+            'font-style': 'italic', 'pointer-events': 'none'
+          }).textContent = lines[li];
+        }
       }
     }
     this.endScaledGroup();
