@@ -318,6 +318,12 @@ a:hover { text-decoration: underline; }
 .mat-detail { font-size: 9px; color: var(--text-muted); line-height: 1.5; }
 
 /* Individual tile boxes */
+.mat-level-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 1px 0; padding: 1px 0; border-bottom: 1px solid #ffffff06;
+}
+.mat-level-tiles { display: flex; gap: 2px; }
+.mat-level-stats { display: flex; align-items: center; gap: 2px; margin-left: 4px; }
 .mat-tiles-row { display: flex; flex-wrap: wrap; gap: 2px; margin: 3px 0; }
 .mat-tile-box {
   display: inline-flex; flex-direction: column; align-items: center;

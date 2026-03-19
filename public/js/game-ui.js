@@ -678,19 +678,11 @@ const GameUI = {
     arrow.innerHTML = this.rightPanelCollapsed ? '&#9664;' : '&#9654;';
   },
 
-  renderTileBox(lv, status, topLevel, ind, showDetail) {
-    const ld = ind.levels[lv];
+  renderTileBox(lv, status, topLevel) {
     const cls = status === 'available' ? 'tile-avail' : status === 'onBoard' ? 'tile-board' : 'tile-used';
     const isTop = status === 'available' && lv === topLevel;
-    const tooltip = ld ? '£' + ld.cost + (ld.coal ? ' +' + ld.coal + ' coal' : '') + (ld.iron ? ' +' + ld.iron + ' iron' : '') : '';
-    let html = '<span class="mat-tile-box ' + cls + (isTop ? ' tile-next' : '') + '" title="' + tooltip + '">';
-    html += '<span class="tile-num">' + lv + '</span>';
-    if (showDetail && ld) {
-      html += '<span class="tile-vp-hex">' + ld.vp + '</span>';
-      html += '<span class="tile-inc-circle">+' + ld.income + '</span>';
-    }
-    html += '</span>';
-    return html;
+    return '<span class="mat-tile-box ' + cls + (isTop ? ' tile-next' : '') + '">' +
+      '<span class="tile-num">' + lv + '</span></span>';
   },
 
   updateMat() {
@@ -757,11 +749,31 @@ const GameUI = {
         });
 
         html += '<div class="mat-group"><div class="mat-header"><span class="mat-name">' + ind.name + '</span></div>';
-        html += '<div class="mat-tiles-row">';
+
+        // Group tiles by level
+        const levelGroups = {};
         for (const t of tiles) {
-          html += this.renderTileBox(t.lv, t.status, topLevel, ind, showDetail);
+          if (!levelGroups[t.lv]) levelGroups[t.lv] = [];
+          levelGroups[t.lv].push(t);
         }
-        html += '</div>';
+
+        // Render each level as its own row
+        for (const [lv, group] of Object.entries(levelGroups)) {
+          const ld = ind.levels[lv];
+          html += '<div class="mat-level-row">';
+          html += '<div class="mat-level-tiles">';
+          for (const t of group) {
+            html += this.renderTileBox(t.lv, t.status, topLevel);
+          }
+          html += '</div>';
+          if (showDetail && ld) {
+            html += '<div class="mat-level-stats">';
+            html += '<span class="tile-inc-circle tile-inc-inline">+' + ld.income + '</span>';
+            html += '<span class="tile-vp-hex tile-vp-inline">' + ld.vp + '</span>';
+            html += '</div>';
+          }
+          html += '</div>';
+        }
 
         if (tileData) {
           html += '<div class="mat-detail">Next: ' + topLevel + ' — £' + tileData.cost;
