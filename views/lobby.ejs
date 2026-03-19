@@ -69,49 +69,56 @@
             <p class="muted">No active games. Start one!</p>
           <% } %>
           <% for (const game of games) { %>
-            <div class="game-card">
-              <div class="game-info">
-                <strong><%= game.name %></strong>
-                <span class="badge badge-<%= game.status %>"><%= game.status %></span>
-                <span class="muted"><%= game.player_count %>/<%= game.num_players %> players</span>
-                <span class="muted">by <%= game.creator_name %></span>
-                <% if (game.gameAppVersion) { %>
-                  <span class="badge badge-version<%= game.compatible ? '' : ' badge-incompatible' %>">v<%= game.gameAppVersion %></span>
-                <% } %>
-              </div>
-              <div class="game-actions">
-                <% if (!game.compatible && game.status === 'active') { %>
-                  <span class="muted" style="color: var(--accent)">Incompatible version</span>
-                <% } else if (game.status === 'active') { %>
-                  <a href="/games/<%= game.id %>" class="btn btn-primary">Play</a>
-                <% } else if (game.status === 'waiting' && game.is_invited) { %>
-                  <form method="POST" action="/games/<%= game.id %>/accept-invite" style="display:inline">
-                    <button type="submit" class="btn btn-primary">Join</button>
-                  </form>
-                <% } else if (game.status === 'waiting') { %>
-                  <a href="/games/<%= game.id %>" class="btn">Enter</a>
-                  <% if (game.is_creator && game.player_count >= game.num_players) { %>
-                    <form method="POST" action="/games/<%= game.id %>/start" style="display:inline">
-                      <button type="submit" class="btn btn-primary">Start</button>
-                    </form>
+            <div class="game-row">
+              <div class="game-card">
+                <div class="game-info">
+                  <strong><%= game.name %></strong>
+                  <span class="badge badge-<%= game.status %>"><%= game.status %></span>
+                  <span class="muted"><%= game.player_count %>/<%= game.num_players %> players</span>
+                  <span class="muted">by <%= game.creator_name %></span>
+                  <% if (game.gameAppVersion) { %>
+                    <span class="badge badge-version<%= game.compatible ? '' : ' badge-incompatible' %>">v<%= game.gameAppVersion %></span>
                   <% } %>
+                </div>
+                <div class="game-actions">
+                  <% if (!game.compatible && game.status === 'active') { %>
+                    <span class="muted" style="color: var(--accent)">Incompatible version</span>
+                  <% } else if (game.status === 'active') { %>
+                    <a href="/games/<%= game.id %>" class="btn btn-primary">Play</a>
+                  <% } else if (game.status === 'waiting' && game.is_invited) { %>
+                    <form method="POST" action="/games/<%= game.id %>/accept-invite" style="display:inline">
+                      <button type="submit" class="btn btn-primary">Join</button>
+                    </form>
+                  <% } else if (game.status === 'waiting' && game.is_creator) { %>
+                    <% if (game.player_count >= game.num_players) { %>
+                      <form method="POST" action="/games/<%= game.id %>/start" style="display:inline">
+                        <button type="submit" class="btn btn-primary">Start</button>
+                      </form>
+                    <% } else { %>
+                      <form method="POST" action="/games/<%= game.id %>/add-bot" style="display:inline">
+                        <button type="submit" class="btn btn-sm">+ Bot</button>
+                      </form>
+                    <% } %>
+                  <% } else if (game.status === 'waiting') { %>
+                    <span class="muted">Waiting...</span>
+                  <% } %>
+                </div>
+                <% if (game.status === 'waiting' && game.is_creator) { %>
+                <div style="margin-top:4px;display:flex;gap:4px;align-items:center;font-size:10px">
+                  <form method="POST" action="/games/<%= game.id %>/invite" style="display:flex;gap:4px;align-items:center">
+                    <input type="text" name="username" placeholder="Invite user..." style="width:100px;padding:2px 4px;font-size:10px">
+                    <button type="submit" class="btn btn-sm">Invite</button>
+                  </form>
+                  <% if (game.invited_names && game.invited_names.length > 0) { %>
+                    <span class="muted">Invited: <%= game.invited_names.join(', ') %></span>
+                  <% } %>
+                </div>
                 <% } %>
               </div>
               <% if (game.is_creator) { %>
-                <form method="POST" action="/games/<%= game.id %>/delete" style="display:inline;margin-left:8px" onsubmit="return confirm('Delete this game?')">
-                  <button type="submit" class="btn btn-sm" style="color:var(--accent);border:none;background:none;font-size:14px" title="Delete game">🗑</button>
-                </form>
-              <% } %>
-              <% if (game.status === 'waiting' && game.is_creator) { %>
-              <div style="margin-top:4px;display:flex;gap:4px;align-items:center;font-size:10px">
-                <form method="POST" action="/games/<%= game.id %>/invite" style="display:flex;gap:4px;align-items:center">
-                  <input type="text" name="username" placeholder="Invite user..." style="width:100px;padding:2px 4px;font-size:10px">
-                  <button type="submit" class="btn btn-sm">Invite</button>
-                </form>
-                <% if (game.invited_names && game.invited_names.length > 0) { %>
-                  <span class="muted">Invited: <%= game.invited_names.join(', ') %></span>
-                <% } %>
-              </div>
+              <form method="POST" action="/games/<%= game.id %>/delete" onsubmit="return confirm('Delete this game?')">
+                <button type="submit" class="game-delete-btn" title="Delete game">🗑</button>
+              </form>
               <% } %>
             </div>
           <% } %>

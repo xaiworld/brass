@@ -11,7 +11,7 @@ router.get('/games/:id', requireLogin, (req, res) => {
 
   const game = db.findGame(gameId);
   if (!game) return res.redirect('/lobby');
-  if (game.status === 'waiting') return res.redirect('/lobby');
+  if (game.status === 'waiting') return res.redirect('/lobby'); // waiting games managed in lobby
 
   const isMember = db.isGameMember(gameId, userId);
   const gs = db.getGameState(gameId);

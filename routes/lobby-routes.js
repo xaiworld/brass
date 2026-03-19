@@ -175,6 +175,32 @@ router.post('/games/:id/delete', requireLogin, (req, res) => {
   res.redirect('/lobby');
 });
 
+// Add a bot to a waiting game
+router.post('/games/:id/add-bot', requireLogin, (req, res) => {
+  const gameId = parseInt(req.params.id);
+  const game = db.findGame(gameId);
+  if (!game || game.status !== 'waiting' || game.created_by !== req.session.user.id) {
+    return res.redirect('/lobby');
+  }
+  const players = db.getGamePlayers(gameId);
+  if (players.length >= game.num_players) return res.redirect('/lobby');
+
+  const botNames = ['Bot_Alpha', 'Bot_Beta', 'Bot_Gamma'];
+  const usedBots = players.filter(p => p.is_bot).map(p => {
+    const u = db.findUserById(p.user_id);
+    return u ? u.username : '';
+  });
+  const botName = botNames.find(n => !usedBots.includes(n)) || 'Bot_' + Date.now();
+
+  let bot = db.findUserByUsername(botName);
+  if (!bot || !bot.is_bot) {
+    bot = db.createUser(botName, 'bot', true);
+  }
+  const seat = players.length;
+  db.addGamePlayer(gameId, bot.id, seat, playerColorNames[seat], true);
+  res.redirect('/lobby');
+});
+
 // GET fallback in case browser navigates directly
 router.get('/games/:id/start', requireLogin, (req, res) => {
   res.redirect('/lobby');
