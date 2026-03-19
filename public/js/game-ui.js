@@ -59,6 +59,15 @@ const GameUI = {
       c.style.flex = '0 0 ' + w + 'px';
     });
 
+    // Enforce floating hand min-width to fit all cards in one row
+    const el = document.getElementById('floating-hand');
+    if (el) {
+      const gap = 4; // matches .floating-hand-cards gap
+      const padding = 20; // container horizontal padding
+      const totalCardsW = cards.length * w + (cards.length - 1) * gap + padding;
+      el.style.minWidth = totalCardsW + 'px';
+    }
+
     this._sizingCards = false;
   },
 
