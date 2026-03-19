@@ -31,7 +31,9 @@
           <label>Map <input type="range" id="map-dim-slider" min="0" max="100" value="70"
                  oninput="BoardRenderer.setMapOpacity(this.value)"></label>
           <span class="board-control-sep">|</span>
-          <button class="btn btn-sm board-edit-btn" id="edit-nodes-btn" onclick="BoardRenderer.toggleEditMode()">Move Nodes</button>
+          <button class="btn btn-sm board-edit-btn" id="toggle-links-btn" onclick="BoardRenderer.toggleLinks()">Links</button>
+          <span class="board-control-sep">|</span>
+          <button class="btn btn-sm board-edit-btn" id="edit-nodes-btn" onclick="BoardRenderer.toggleEditMode()">Move</button>
           <button class="btn btn-sm" id="reset-nodes-btn" onclick="BoardRenderer.resetPositions()" style="display:none">Reset</button>
         </div>
         <svg id="game-board" viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -46,6 +48,15 @@
           <div class="panel-section" id="mat-panel"></div>
         </div>
       </div>
+    </div>
+
+    <!-- Floating hand (when detached) -->
+    <div class="floating-hand" id="floating-hand" style="display:none">
+      <div class="floating-hand-header">
+        <span>Hand</span>
+        <button class="btn btn-sm" onclick="GameUI.toggleDetachHand()">Dock</button>
+      </div>
+      <div class="floating-hand-cards" id="floating-hand-cards"></div>
     </div>
 
     <!-- Collapsible log -->

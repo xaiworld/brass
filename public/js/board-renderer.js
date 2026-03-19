@@ -5,6 +5,7 @@ const BoardRenderer = {
   svg: null,
   mapImage: null,
   editMode: false,
+  showLinks: true,
   dragging: null,
   dragOffset: { x: 0, y: 0 },
   customPositions: {},  // locId -> {x, y}
@@ -58,8 +59,8 @@ const BoardRenderer = {
     const slider = document.getElementById('map-dim-slider');
     if (slider) this.mapImage.setAttribute('opacity', slider.value / 100);
 
-    // Draw links
-    this.drawLinks();
+    // Draw links (toggleable)
+    if (this.showLinks) this.drawLinks();
 
     // Draw non-buildable locations (including external ports)
     this.drawNonBuildable();
@@ -75,6 +76,13 @@ const BoardRenderer = {
     if (this.mapImage) {
       this.mapImage.setAttribute('opacity', value / 100);
     }
+  },
+
+  toggleLinks() {
+    this.showLinks = !this.showLinks;
+    const btn = document.getElementById('toggle-links-btn');
+    if (btn) btn.textContent = this.showLinks ? 'Links' : 'No Links';
+    this.render();
   },
 
   drawLinks() {
@@ -177,13 +185,13 @@ const BoardRenderer = {
 
   // Default positions for market panels (draggable)
   marketDefaults: {
-    turnOrderPanel:  { x: 573, y: 240 },
-    moneySpentPanel: { x: 573, y: 310 },
+    turnOrderPanel:  { x: 573, y: 200 },
+    moneySpentPanel: { x: 573, y: 290 },
     demandPanel:     { x: 573, y: 400 },
-    vpPanel:         { x: 25,  y: 20 },
-    coalPanel:       { x: 20,  y: 80 },
-    ironPanel:       { x: 48,  y: 80 },
-    incomePanel:     { x: 30,  y: 210 }
+    vpPanel:         { x: 30,  y: 20 },
+    coalPanel:       { x: 20,  y: 85 },
+    ironPanel:       { x: 48,  y: 85 },
+    incomePanel:     { x: 30,  y: 220 }
   },
 
   getMarketPos(id) {
@@ -299,9 +307,9 @@ const BoardRenderer = {
   drawTurnOrderPanel(state) {
     const pos = this.getMarketPos('turnOrderPanel');
     const numPlayers = state.players.length;
-    const rowH = 12;
-    const panelH = numPlayers * rowH + 14;
-    const panelW = 55;
+    const rowH = 14;
+    const panelH = numPlayers * rowH + 16;
+    const panelW = 60;
 
     const bg = this.createAndAppend('rect', {
       x: pos.x - panelW/2, y: pos.y - 6,
@@ -311,8 +319,8 @@ const BoardRenderer = {
     bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'turnOrderPanel', 'market'));
 
     this.createAndAppend('text', {
-      x: pos.x, y: pos.y + 2,
-      'text-anchor': 'middle', 'font-size': '5', fill: '#ccc',
+      x: pos.x, y: pos.y + 3,
+      'text-anchor': 'middle', 'font-size': '6', fill: '#ccc',
       'font-weight': 'bold', 'pointer-events': 'none'
     }).textContent = 'TURN ORDER';
 
@@ -342,9 +350,9 @@ const BoardRenderer = {
   drawMoneySpentPanel(state) {
     const pos = this.getMarketPos('moneySpentPanel');
     const numPlayers = state.players.length;
-    const rowH = 12;
-    const panelH = numPlayers * rowH + 14;
-    const panelW = 60;
+    const rowH = 14;
+    const panelH = numPlayers * rowH + 16;
+    const panelW = 65;
 
     const bg = this.createAndAppend('rect', {
       x: pos.x - panelW/2, y: pos.y - 6,
@@ -403,7 +411,7 @@ const BoardRenderer = {
     const numPlayers = state.players.length;
     const colW = 28;
     const panelW = numPlayers * colW + 4;
-    const panelH = 28;
+    const panelH = 36;
 
     const bg = this.createAndAppend('rect', {
       x: pos.x - 2, y: pos.y - 6,
@@ -412,24 +420,31 @@ const BoardRenderer = {
     });
     bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'vpPanel', 'market'));
 
+    // Label
+    this.createAndAppend('text', {
+      x: pos.x + panelW/2 - 2, y: pos.y + 2,
+      'text-anchor': 'middle', 'font-size': '5', fill: '#ccc',
+      'font-weight': 'bold', 'pointer-events': 'none'
+    }).textContent = 'VICTORY POINTS';
+
     for (let i = 0; i < state.players.length; i++) {
       const p = state.players[i];
       const cx = pos.x + i * colW + colW/2;
 
       // Colored square with VP
       this.createAndAppend('rect', {
-        x: cx - 9, y: pos.y - 2,
+        x: cx - 9, y: pos.y + 6,
         width: 18, height: 14, rx: 2,
         fill: BOARD.playerColors[p.seat], stroke: '#fff', 'stroke-width': 0.5
       });
       this.createAndAppend('text', {
-        x: cx, y: pos.y + 8,
+        x: cx, y: pos.y + 16,
         'text-anchor': 'middle', 'font-size': '8', fill: '#fff',
         'font-weight': 'bold', 'pointer-events': 'none'
       }).textContent = p.vp;
       // Name below
       this.createAndAppend('text', {
-        x: cx, y: pos.y + 18,
+        x: cx, y: pos.y + 26,
         'text-anchor': 'middle', 'font-size': '4', fill: '#aaa',
         'pointer-events': 'none'
       }).textContent = (p.username || '').substring(0, 6);
@@ -438,10 +453,10 @@ const BoardRenderer = {
 
   drawIncomePanel(state) {
     const pos = this.getMarketPos('incomePanel');
-    const boxSize = 5;
+    const boxSize = 7;
     const gap = 1;
-    const cols = 10;
-    const rows = 10; // 0-99
+    const cols = 5;
+    const rows = 20; // 0-99
     const panelW = cols * (boxSize + gap) + 8;
     const panelH = rows * (boxSize + gap) + 14;
 

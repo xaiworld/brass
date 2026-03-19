@@ -523,9 +523,17 @@ const GameUI = {
   // ============ HAND ============
 
   handCollapsed: false,
+  handDetached: false,
+  hoveredCard: null,
 
   toggleHand() {
     this.handCollapsed = !this.handCollapsed;
+    this.updateHand();
+  },
+
+  toggleDetachHand() {
+    this.handDetached = !this.handDetached;
+    document.getElementById('floating-hand').style.display = this.handDetached ? 'block' : 'none';
     this.updateHand();
   },
 
@@ -536,7 +544,8 @@ const GameUI = {
   },
 
   onCardHover(cardId) {
-    if (this.selectedAction) return; // don't interfere with action flow
+    if (this.selectedAction) return;
+    this.hoveredCard = cardId;
     BoardRenderer.clearHighlights();
     const info = parseCardId(cardId);
     if (info.type === 'location') {
@@ -549,49 +558,74 @@ const GameUI = {
         BoardRenderer.highlightLocations(validLocs, () => {});
       }
     }
-    // Show action hints
-    this.showActionHints(cardId, info);
+    this.showActionPopup(cardId, info);
   },
 
   onCardLeave() {
     if (this.selectedAction) return;
+    this.hoveredCard = null;
     BoardRenderer.clearHighlights();
-    this.hideActionHints();
+    // Delay hide so user can click actions
+    setTimeout(() => {
+      if (!this.hoveredCard && !this.actionPopupHovered) this.hideActionPopup();
+    }, 200);
   },
 
-  showActionHints(cardId, info) {
-    let existing = document.getElementById('action-hints-float');
-    if (!existing) {
-      existing = document.createElement('div');
-      existing.id = 'action-hints-float';
-      existing.className = 'action-hints-float';
-      document.querySelector('.game-main').appendChild(existing);
+  actionPopupHovered: false,
+
+  showActionPopup(cardId, info) {
+    let popup = document.getElementById('action-popup');
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.id = 'action-popup';
+      popup.className = 'action-popup';
+      popup.addEventListener('mouseenter', () => { this.actionPopupHovered = true; });
+      popup.addEventListener('mouseleave', () => {
+        this.actionPopupHovered = false;
+        if (!this.hoveredCard) this.hideActionPopup();
+      });
+      document.querySelector('.game-main').appendChild(popup);
     }
-    const hints = [];
+
     const myPlayer = gameState.players.find(p => p.userId === USER_ID);
-    if (!myPlayer) return;
+    const currentSeat = gameState.turnOrder[gameState.currentPlayerIndex];
+    const isMyTurn = myPlayer && myPlayer.seat === currentSeat && gameState.phase === 'actions';
 
-    if (info.type === 'location') {
-      const loc = BOARD.locations[info.location];
-      if (loc) hints.push(`<div class="action-hint"><strong>Build Industry</strong> at ${loc.name}</div>`);
+    let html = '<div class="popup-title">Actions</div>';
+
+    if (!isMyTurn) {
+      html += '<div class="popup-muted">Not your turn</div>';
     } else {
-      const validLocs = this.getValidBuildLocations(info.industry);
-      if (validLocs.length > 0) {
-        hints.push(`<div class="action-hint"><strong>Build ${INDUSTRIES[info.industry]?.name}</strong> at ${validLocs.length} location${validLocs.length > 1 ? 's' : ''}</div>`);
+      // Build Industry
+      if (info.type === 'location') {
+        const loc = BOARD.locations[info.location];
+        if (loc) html += '<button class="popup-action" onclick="GameUI.quickAction(\'buildIndustry\',\'' + cardId + '\')">Build Industry at ' + loc.name + '</button>';
+      } else {
+        const validLocs = this.getValidBuildLocations(info.industry);
+        if (validLocs.length > 0) {
+          html += '<button class="popup-action" onclick="GameUI.quickAction(\'buildIndustry\',\'' + cardId + '\')">Build ' + (INDUSTRIES[info.industry]?.name || '') + ' (' + validLocs.length + ' spots)</button>';
+        }
       }
+      html += '<button class="popup-action" onclick="GameUI.quickAction(\'buildLink\',\'' + cardId + '\')">Build Link</button>';
+      html += '<button class="popup-action" onclick="GameUI.quickAction(\'sellCotton\',\'' + cardId + '\')">Sell Cotton</button>';
+      html += '<button class="popup-action" onclick="GameUI.quickAction(\'takeLoan\',\'' + cardId + '\')">Take Loan</button>';
+      html += '<button class="popup-action" onclick="GameUI.quickAction(\'develop\',\'' + cardId + '\')">Develop</button>';
+      html += '<button class="popup-action popup-pass" onclick="GameUI.quickAction(\'pass\',\'' + cardId + '\')">Pass</button>';
     }
-    hints.push(`<div class="action-hint"><strong>Build Link</strong> — discard to build canal/rail</div>`);
-    hints.push(`<div class="action-hint"><strong>Sell Cotton</strong> — discard to sell mills</div>`);
-    hints.push(`<div class="action-hint"><strong>Take Loan</strong> — discard for £10-30</div>`);
-    hints.push(`<div class="action-hint"><strong>Develop</strong> — discard + iron to skip tiles</div>`);
-    hints.push(`<div class="action-hint"><strong>Pass</strong> — discard and do nothing</div>`);
-    hints.push(`<div class="action-hint"><strong>Wild Build</strong> — use 2 actions + 2 cards to build anywhere</div>`);
-    existing.innerHTML = hints.join('');
+    popup.innerHTML = html;
+    popup.style.display = 'block';
   },
 
-  hideActionHints() {
-    const el = document.getElementById('action-hints-float');
-    if (el) el.remove();
+  hideActionPopup() {
+    const el = document.getElementById('action-popup');
+    if (el) el.style.display = 'none';
+  },
+
+  quickAction(type, cardId) {
+    this.hideActionPopup();
+    this.selectedCard = cardId;
+    this.startAction(type);
+    this.updateHand();
   },
 
   getValidBuildLocations(industryType) {
@@ -625,34 +659,47 @@ const GameUI = {
     return [...new Set(validLocs)];
   },
 
+  renderCardHTML(cardId) {
+    const info = parseCardId(cardId);
+    const label = info.type === 'location'
+      ? (BOARD.locations[info.location]?.name || info.location)
+      : (INDUSTRIES[info.industry]?.name || info.industry);
+    const isSelected = this.selectedCard === cardId;
+    return '<div class="card card-big ' + info.type + (isSelected ? ' selected' : '') + '"'
+      + ' onclick="GameUI.selectCard(\'' + cardId + '\')"'
+      + ' onmouseenter="GameUI.onCardHover(\'' + cardId + '\')"'
+      + ' onmouseleave="GameUI.onCardLeave()">'
+      + '<div class="card-type">' + (info.type === 'location' ? 'LOC' : 'IND') + '</div>'
+      + '<div class="card-label">' + label + '</div>'
+      + '</div>';
+  },
+
   updateHand() {
     const panel = document.getElementById('hand-panel');
+    const floatCards = document.getElementById('floating-hand-cards');
     const myPlayer = gameState.players.find(p => p.userId === USER_ID);
+
     if (!myPlayer || !myPlayer.hand) {
       panel.innerHTML = '<h4>Hand</h4><p class="muted">Not your cards to see</p>';
+      if (floatCards) floatCards.innerHTML = '';
       return;
     }
 
-    const arrow = this.handCollapsed ? '&#9654;' : '&#9660;';
-    panel.innerHTML = `
-      <h4 class="collapsible-header" onclick="GameUI.toggleHand()">Hand (${myPlayer.hand.length}) <span class="collapse-arrow">${arrow}</span></h4>
-      ${this.handCollapsed ? '' : `<div class="hand-cards">
-        ${myPlayer.hand.map(cardId => {
-          const info = parseCardId(cardId);
-          const label = info.type === 'location'
-            ? (BOARD.locations[info.location]?.name || info.location)
-            : (INDUSTRIES[info.industry]?.name || info.industry);
-          const isSelected = this.selectedCard === cardId;
-          return `<div class="card ${info.type} ${isSelected ? 'selected' : ''}"
-            onclick="GameUI.selectCard('${cardId}')"
-            onmouseenter="GameUI.onCardHover('${cardId}')"
-            onmouseleave="GameUI.onCardLeave()">
-            <div class="card-type">${info.type === 'location' ? 'LOC' : 'IND'}</div>
-            <div class="card-label">${label}</div>
-          </div>`;
-        }).join('')}
-      </div>`}
-    `;
+    const cardsHTML = myPlayer.hand.map(c => this.renderCardHTML(c)).join('');
+
+    if (this.handDetached) {
+      // Show in floating panel
+      panel.innerHTML = '<h4 class="collapsible-header" onclick="GameUI.toggleDetachHand()">Hand (' + myPlayer.hand.length + ') <span class="muted" style="font-size:8px">floating</span></h4>';
+      if (floatCards) floatCards.innerHTML = cardsHTML;
+    } else {
+      const arrow = this.handCollapsed ? '&#9654;' : '&#9660;';
+      panel.innerHTML = '<h4 class="collapsible-header" onclick="GameUI.toggleHand()">'
+        + 'Hand (' + myPlayer.hand.length + ') <span class="collapse-arrow">' + arrow + '</span>'
+        + ' <span class="muted" style="font-size:8px;cursor:pointer;margin-left:4px" onclick="event.stopPropagation();GameUI.toggleDetachHand()">float</span>'
+        + '</h4>'
+        + (this.handCollapsed ? '' : '<div class="hand-cards">' + cardsHTML + '</div>');
+      if (floatCards) floatCards.innerHTML = '';
+    }
   },
 
   // ============ INDUSTRY MAT ============
