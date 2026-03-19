@@ -4,6 +4,7 @@ const { createInitialState } = require('../lib/game-setup');
 const { playerColorNames } = require('../lib/industry-data');
 const db = require('../lib/db');
 const { APP_VERSION, isCompatible } = require('../lib/version');
+const { startTraining, stopTraining, isTrainingActive, getTrainingStatus } = require('../lib/training-runner');
 const router = express.Router();
 
 router.get('/lobby', requireLogin, (req, res) => {
@@ -52,7 +53,11 @@ router.get('/lobby', requireLogin, (req, res) => {
   const totalPlayers = allUsers.length;
   const isAdmin = req.session.user.username === 'xai';
 
-  res.render('lobby', { games: myGames, appVersion: APP_VERSION, totalGames, totalPlayers, isAdmin });
+  // Training stats
+  const trainingStats = db.getTrainingStats();
+  const trainingStatus = getTrainingStatus();
+
+  res.render('lobby', { games: myGames, appVersion: APP_VERSION, totalGames, totalPlayers, isAdmin, trainingStats, trainingStatus });
 });
 
 router.post('/games/create', requireLogin, (req, res) => {
@@ -238,6 +243,20 @@ router.post('/games/:id/start', requireLogin, (req, res) => {
   botModule.checkAndPlayBot(gameId);
 
   res.redirect(`/games/${gameId}`);
+});
+
+// Toggle training mode (xai admin only)
+router.post('/admin/toggle-training', requireLogin, (req, res) => {
+  if (req.session.user.username !== 'xai') return res.redirect('/lobby');
+
+  if (isTrainingActive()) {
+    stopTraining();
+  } else {
+    const gamesPerBatch = parseInt(req.body.gamesPerBatch) || 3;
+    const intervalMs = parseInt(req.body.intervalMs) || 10000;
+    startTraining(gamesPerBatch, intervalMs);
+  }
+  res.redirect('/lobby');
 });
 
 module.exports = router;

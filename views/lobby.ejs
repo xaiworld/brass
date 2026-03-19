@@ -144,6 +144,39 @@
           </form>
           <p class="muted" style="margin-top:6px;font-size:10px">User will set their password on first login.</p>
         </div>
+
+        <div class="panel-section" style="margin-top:12px">
+          <h4 style="color:var(--gold);margin-bottom:8px">Bot Training</h4>
+          <form method="POST" action="/admin/toggle-training">
+            <input type="hidden" name="gamesPerBatch" value="3">
+            <input type="hidden" name="intervalMs" value="10000">
+            <button type="submit" class="btn btn-sm" style="background:<%= trainingStatus.active ? '#e74c3c' : '#27ae60' %>">
+              <%= trainingStatus.active ? 'Stop Training' : 'Start Training' %>
+            </button>
+          </form>
+          <div style="margin-top:8px;font-size:10px">
+            <div>Games played: <strong><%= trainingStatus.totalGames || 0 %></strong></div>
+            <% if (trainingStats.tiers) { %>
+            <div style="margin-top:4px">
+              <div style="color:#27ae60">Pro: <%= trainingStats.tiers.pro || 'TBD' %></div>
+              <div style="color:#f39c12">Avg: <%= trainingStats.tiers.average || 'TBD' %></div>
+              <div style="color:#e74c3c">Noob: <%= trainingStats.tiers.noob || 'TBD' %></div>
+            </div>
+            <% } %>
+            <% if (trainingStats.rankings && Object.keys(trainingStats.rankings).length > 0) { %>
+            <table style="margin-top:6px;font-size:9px;width:100%;border-collapse:collapse">
+              <tr style="border-bottom:1px solid #555"><th style="text-align:left">Bot</th><th>W%</th><th>Avg</th><th>G</th></tr>
+              <% const sortedBots = Object.entries(trainingStats.rankings).sort((a,b) => (b[1].winRate||0) - (a[1].winRate||0)); %>
+              <% for (const [name, s] of sortedBots) { %>
+              <tr><td style="text-align:left"><%= name.replace('_',' ') %></td><td style="text-align:center"><%= s.winRate || 0 %>%</td><td style="text-align:center"><%= s.avgVP || 0 %></td><td style="text-align:center"><%= s.games || 0 %></td></tr>
+              <% } %>
+            </table>
+            <% } %>
+            <% if (trainingStats.lastUpdate) { %>
+            <div class="muted" style="margin-top:4px;font-size:8px">Last: <%= new Date(trainingStats.lastUpdate).toLocaleTimeString() %></div>
+            <% } %>
+          </div>
+        </div>
         <% } %>
       </div>
     </div>
