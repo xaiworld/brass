@@ -38,7 +38,8 @@
           <span class="board-control-sep">|</span>
           <button class="btn btn-sm board-edit-btn" id="edit-nodes-btn" onclick="BoardRenderer.toggleEditMode()">Move</button>
           <button class="btn btn-sm board-edit-btn" id="resize-nodes-btn" onclick="BoardRenderer.toggleResizeMode()">Resize</button>
-          <button class="btn btn-sm" id="reset-nodes-btn" onclick="BoardRenderer.resetPositions()" style="display:none">Reset</button>
+          <button class="btn btn-sm" id="reset-nodes-btn" onclick="BoardRenderer.resetPositions()" style="display:none">Undo</button>
+          <button class="btn btn-sm" id="like-xai-btn" onclick="BoardRenderer.loadXaiPositions()" style="display:none">Like Xai</button>
         </div>
         <svg id="game-board" viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>

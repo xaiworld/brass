@@ -102,17 +102,15 @@ const BoardRenderer = {
   toggleResizeMode() {
     this.resizeMode = !this.resizeMode;
     const btn = document.getElementById('resize-nodes-btn');
-    const resetBtn = document.getElementById('reset-nodes-btn');
     if (this.resizeMode) {
       btn.textContent = 'Done Resize';
       btn.classList.add('btn-primary');
-      resetBtn.style.display = '';
     } else {
       btn.textContent = 'Resize';
       btn.classList.remove('btn-primary');
-      if (!this.editMode) resetBtn.style.display = 'none';
       this.savePositions();
     }
+    this.updateEditButtons();
   },
 
   getScale(id) {
@@ -839,22 +837,26 @@ const BoardRenderer = {
 
   // ============ EDIT MODE: DRAG NODES ============
 
+  updateEditButtons() {
+    const active = this.editMode || this.resizeMode;
+    document.getElementById('reset-nodes-btn').style.display = active ? '' : 'none';
+    document.getElementById('like-xai-btn').style.display = active ? '' : 'none';
+  },
+
   toggleEditMode() {
     this.editMode = !this.editMode;
     const btn = document.getElementById('edit-nodes-btn');
-    const resetBtn = document.getElementById('reset-nodes-btn');
     if (this.editMode) {
       btn.textContent = 'Done';
       btn.classList.add('btn-primary');
-      resetBtn.style.display = '';
       this.svg.style.cursor = 'move';
     } else {
-      btn.textContent = 'Move Nodes';
+      btn.textContent = 'Move';
       btn.classList.remove('btn-primary');
-      resetBtn.style.display = 'none';
       this.svg.style.cursor = '';
       this.savePositions();
     }
+    this.updateEditButtons();
   },
 
   svgPoint(e) {
@@ -949,20 +951,8 @@ const BoardRenderer = {
     }
   },
 
-  async resetPositions() {
-    if (this.positionHistory.length > 0) {
-      // Undo: restore previous state
-      this.customPositions = JSON.parse(this.positionHistory.pop());
-    } else {
-      // No history: fall back to xai's config (or factory defaults)
-      if (typeof XAI_POSITIONS === 'object' && XAI_POSITIONS !== null) {
-        this.customPositions = JSON.parse(JSON.stringify(XAI_POSITIONS));
-      } else {
-        this.customPositions = {};
-      }
-    }
-    // Apply to BOARD data
-    // First reset to factory defaults
+  applyAndRender(positions) {
+    // Reset to factory defaults first
     for (const [locId, loc] of Object.entries(BOARD_DEFAULTS.locations)) {
       BOARD.locations[locId].x = loc.x;
       BOARD.locations[locId].y = loc.y;
@@ -971,15 +961,23 @@ const BoardRenderer = {
       BOARD.nonBuildable[id].x = wp.x;
       BOARD.nonBuildable[id].y = wp.y;
     }
-    // Then apply current customPositions on top
+    this.customPositions = positions;
     this.applyCustomPositions();
-    // Also update market panel defaults
     for (const id of Object.keys(this.marketDefaults)) {
       if (this.customPositions[id]) {
         this.marketDefaults[id] = { x: this.customPositions[id].x, y: this.customPositions[id].y };
       }
     }
     this.render();
+  },
+
+  async resetPositions() {
+    if (this.positionHistory.length > 0) {
+      this.applyAndRender(JSON.parse(this.positionHistory.pop()));
+    } else {
+      // Nothing to undo - reset to factory defaults
+      this.applyAndRender({});
+    }
     // Save to server
     try {
       if (Object.keys(this.customPositions).length > 0) {
@@ -992,5 +990,20 @@ const BoardRenderer = {
         await fetch('/api/user/node-positions', { method: 'DELETE' });
       }
     } catch (e) {}
+  },
+
+  async loadXaiPositions() {
+    if (typeof XAI_POSITIONS === 'object' && XAI_POSITIONS !== null) {
+      this.pushHistory();
+      this.applyAndRender(JSON.parse(JSON.stringify(XAI_POSITIONS)));
+      // Save as user's own
+      try {
+        await fetch('/api/user/node-positions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.customPositions)
+        });
+      } catch (e) {}
+    }
   }
 };
