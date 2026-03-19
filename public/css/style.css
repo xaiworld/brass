@@ -37,7 +37,7 @@ a:hover { text-decoration: underline; }
 .nav-brand {
   font-size: 18px;
   font-weight: bold;
-  color: var(--gold) !important;
+  color: #fff !important;
 }
 .nav-links { display: flex; align-items: center; gap: 15px; }
 .nav-link { color: var(--text); font-size: 14px; }
@@ -55,8 +55,8 @@ a:hover { text-decoration: underline; }
   transition: all 0.2s;
 }
 .btn:hover { background: var(--surface-light); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn-primary:hover { background: #c73550; }
+.btn-primary { background: #4a6a8a; border-color: #4a6a8a; color: #fff; }
+.btn-primary:hover { background: #3a5a7a; }
 .btn-sm { padding: 3px 10px; font-size: 12px; }
 
 /* Forms */
@@ -538,8 +538,8 @@ body.minimal-mode .money-disc.bronze { background: transparent; color: #CD7F32; 
 
 /* Wiki */
 .wiki-container { max-width: 800px; margin: 0 auto; padding: 20px; }
-.wiki-container h1 { color: var(--gold); margin-bottom: 16px; }
-.wiki-container h2 { color: var(--gold); margin: 24px 0 8px; font-size: 20px; }
+.wiki-container h1 { color: #fff; margin-bottom: 16px; }
+.wiki-container h2 { color: #ddd; margin: 24px 0 8px; font-size: 20px; }
 .wiki-container h3 { color: var(--accent); margin: 16px 0 6px; }
 .wiki-container p { margin-bottom: 10px; line-height: 1.6; }
 .wiki-container ul, .wiki-container ol { margin-left: 20px; margin-bottom: 10px; }

@@ -96,12 +96,12 @@
                     </form>
                   <% } %>
                 <% } %>
-                <% if (game.is_creator) { %>
-                  <form method="POST" action="/games/<%= game.id %>/delete" style="display:inline" onsubmit="return confirm('Delete this game?')">
-                    <button type="submit" class="btn btn-sm" style="color:var(--accent)" title="Delete game">🗑</button>
-                  </form>
-                <% } %>
               </div>
+              <% if (game.is_creator) { %>
+                <form method="POST" action="/games/<%= game.id %>/delete" style="display:inline;margin-left:8px" onsubmit="return confirm('Delete this game?')">
+                  <button type="submit" class="btn btn-sm" style="color:var(--accent);border:none;background:none;font-size:14px" title="Delete game">🗑</button>
+                </form>
+              <% } %>
               <% if (game.status === 'waiting' && game.is_creator) { %>
               <div style="margin-top:4px;display:flex;gap:4px;align-items:center;font-size:10px">
                 <form method="POST" action="/games/<%= game.id %>/invite" style="display:flex;gap:4px;align-items:center">
