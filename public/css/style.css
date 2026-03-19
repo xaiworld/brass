@@ -82,6 +82,7 @@ a:hover { text-decoration: underline; }
 .muted { color: var(--text-muted); font-size: 13px; }
 
 /* Lobby */
+.lobby-quick { display: flex; gap: 10px; margin-bottom: 16px; }
 .lobby-create {
   background: var(--bg-light);
   padding: 16px;

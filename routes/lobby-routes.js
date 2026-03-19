@@ -59,6 +59,43 @@ router.post('/games/create', requireLogin, (req, res) => {
   res.redirect('/lobby');
 });
 
+// Quick game: create + add bots + start immediately
+router.post('/games/quick', requireLogin, (req, res) => {
+  const userId = req.session.user.id;
+  const nb = Math.min(3, Math.max(1, parseInt(req.body.numBots) || 2));
+  const np = nb + 1;
+  const names = ['Lancashire', 'Birmingham', 'Industrial', 'Revolution', 'Canal', 'Railway', 'Empire', 'Trade'];
+  const name = names[Math.floor(Math.random() * names.length)] + ' ' + Math.floor(Math.random() * 1000);
+
+  const game = db.createGame(name, np, userId);
+  db.addGamePlayer(game.id, userId, 0, playerColorNames[0]);
+
+  for (let i = 0; i < nb; i++) {
+    const botName = 'Bot_' + ['Alpha', 'Beta', 'Gamma'][i];
+    let bot = db.findUserByUsername(botName);
+    if (!bot || !bot.is_bot) {
+      bot = db.createUser(botName, 'bot', true);
+    }
+    db.addGamePlayer(game.id, bot.id, i + 1, playerColorNames[i + 1], true);
+  }
+
+  // Start immediately
+  const dbPlayers = db.getGamePlayers(game.id);
+  const players = dbPlayers.map(p => {
+    const user = db.findUserById(p.user_id);
+    return { userId: p.user_id, username: user ? user.username : 'Unknown', color: p.color, isBot: p.is_bot };
+  });
+
+  const state = createInitialState(players, players.length);
+  db.updateGame(game.id, { status: 'active' });
+  db.setGameState(game.id, JSON.stringify(state), 0);
+
+  const botModule = require('../lib/bot-engine');
+  botModule.checkAndPlayBot(game.id);
+
+  res.redirect('/games/' + game.id);
+});
+
 router.post('/games/:id/join', requireLogin, (req, res) => {
   const userId = req.session.user.id;
   const gameId = parseInt(req.params.id);

@@ -534,7 +534,7 @@ const BoardRenderer = {
     const numPlayers = state.players.length;
     const colW = 28;
     const panelW = numPlayers * colW + 4;
-    const panelH = 42;
+    const panelH = 48;
 
     this.createPanelBg('vpPanel', pos.x - 2, pos.y - 6, panelW, panelH);
 
@@ -571,7 +571,7 @@ const BoardRenderer = {
       }).textContent = p.vp;
       // Name below
       this.createAndAppend('text', {
-        x: cx, y: pos.y + 26,
+        x: cx, y: pos.y + 32,
         'text-anchor': 'middle', 'font-size': '4', fill: '#aaa',
         'pointer-events': 'none'
       }).textContent = (p.username || '').substring(0, 6);
