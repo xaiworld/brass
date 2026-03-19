@@ -8,6 +8,7 @@ const BoardRenderer = {
   resizeMode: false,
   showLinks: true,
   dragging: null,
+  resizing: null,  // { id, startY, startScale }
   dragOffset: { x: 0, y: 0 },
   customPositions: {},  // locId -> {x, y, scale}
   positionHistory: [],  // stack of previous customPositions snapshots
@@ -298,14 +299,7 @@ const BoardRenderer = {
     this.beginScaledGroup('demandPanel', pos.x, pos.y);
     const demand = state.distantMarketDemand;
     const w = 24, h = 180;
-
-    // Background (draggable)
-    const bg = this.createAndAppend('rect', {
-      x: pos.x - w/2, y: pos.y - h/2 - 10,
-      width: w, height: h + 20,
-      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
-    });
-    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'demandPanel', 'market'));
+    this.createPanelBg('demandPanel', pos.x - w/2, pos.y - h/2 - 10, w, h + 20);
 
     const step = h / 8;
     const top = pos.y - h/2;
@@ -346,14 +340,7 @@ const BoardRenderer = {
     const slotSize = 11, gap = 2;
     const panelW = 24;
     const panelH = 8 * (slotSize + gap) + 16;
-
-    // Background (draggable)
-    const bg = this.createAndAppend('rect', {
-      x: pos.x - panelW/2, y: pos.y - 6,
-      width: panelW, height: panelH,
-      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
-    });
-    bg.addEventListener('mousedown', (e) => this.onDragStart(e, panelId, 'market'));
+    this.createPanelBg(panelId, pos.x - panelW/2, pos.y - 6, panelW, panelH);
 
     // Label
     this.createAndAppend('text', {
@@ -397,12 +384,7 @@ const BoardRenderer = {
     const panelH = numPlayers * rowH + 16;
     const panelW = 60;
 
-    const bg = this.createAndAppend('rect', {
-      x: pos.x - panelW/2, y: pos.y - 6,
-      width: panelW, height: panelH,
-      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
-    });
-    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'turnOrderPanel', 'market'));
+    this.createPanelBg('turnOrderPanel', pos.x - panelW/2, pos.y - 6, panelW, panelH);
 
     this.createAndAppend('text', {
       x: pos.x, y: pos.y + 3,
@@ -442,12 +424,7 @@ const BoardRenderer = {
     const panelH = numPlayers * rowH + 16;
     const panelW = 65;
 
-    const bg = this.createAndAppend('rect', {
-      x: pos.x - panelW/2, y: pos.y - 6,
-      width: panelW, height: panelH,
-      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
-    });
-    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'moneySpentPanel', 'market'));
+    this.createPanelBg('moneySpentPanel', pos.x - panelW/2, pos.y - 6, panelW, panelH);
 
     this.createAndAppend('text', {
       x: pos.x, y: pos.y + 2,
@@ -503,12 +480,7 @@ const BoardRenderer = {
     const panelW = numPlayers * colW + 4;
     const panelH = 36;
 
-    const bg = this.createAndAppend('rect', {
-      x: pos.x - 2, y: pos.y - 6,
-      width: panelW, height: panelH,
-      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
-    });
-    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'vpPanel', 'market'));
+    this.createPanelBg('vpPanel', pos.x - 2, pos.y - 6, panelW, panelH);
 
     // Label
     this.createAndAppend('text', {
@@ -554,12 +526,7 @@ const BoardRenderer = {
     const panelW = cols * (boxSize + gap) + 8;
     const panelH = rows * (boxSize + gap) + 14;
 
-    const bg = this.createAndAppend('rect', {
-      x: pos.x - 4, y: pos.y - 6,
-      width: panelW, height: panelH,
-      rx: 3, fill: '#00000077', stroke: this.editMode ? '#ffcc00' : '#88888844', 'stroke-width': this.editMode ? 1.5 : 0.5
-    });
-    bg.addEventListener('mousedown', (e) => this.onDragStart(e, 'incomePanel', 'market'));
+    this.createPanelBg('incomePanel', pos.x - 4, pos.y - 6, panelW, panelH);
 
     this.createAndAppend('text', {
       x: pos.x + panelW/2 - 4, y: pos.y + 2,
@@ -795,6 +762,51 @@ const BoardRenderer = {
     this._currentGroup = null;
   },
 
+  // Draw resize handles on a panel background rect
+  addResizeHandle(panelId, x, y, w, h) {
+    if (!this.resizeMode) return;
+    // Bottom-right corner triangle
+    const tri = this.createAndAppend('polygon', {
+      points: (x + w) + ',' + (y + h - 6) + ' ' + (x + w) + ',' + (y + h) + ' ' + (x + w - 6) + ',' + (y + h),
+      fill: '#ffcc00cc', stroke: '#fff', 'stroke-width': 0.3,
+      cursor: 'nwse-resize'
+    });
+    tri.addEventListener('mousedown', (e) => this.onResizeStart(e, panelId));
+
+    // Bottom bar
+    const bar = this.createAndAppend('rect', {
+      x: x + 3, y: y + h - 2.5,
+      width: w - 6, height: 2.5,
+      rx: 1, fill: '#ffcc0077',
+      cursor: 'ns-resize'
+    });
+    bar.addEventListener('mousedown', (e) => this.onResizeStart(e, panelId));
+  },
+
+  // Convenience: create panel bg and add resize handle
+  createPanelBg(panelId, x, y, w, h) {
+    const bg = this.createAndAppend('rect', {
+      x, y, width: w, height: h,
+      rx: 3, fill: '#00000077',
+      stroke: (this.editMode || this.resizeMode) ? '#ffcc00' : '#88888844',
+      'stroke-width': (this.editMode || this.resizeMode) ? 1.5 : 0.5
+    });
+    bg.addEventListener('mousedown', (e) => this.onDragStart(e, panelId, 'market'));
+    this.addResizeHandle(panelId, x, y, w, h);
+    return bg;
+  },
+
+  onResizeStart(e, panelId) {
+    e.preventDefault();
+    e.stopPropagation();
+    const pt = this.svgPoint(e);
+    this.resizing = {
+      id: panelId,
+      startY: pt.y,
+      startScale: this.getScale(panelId)
+    };
+  },
+
   highlightLocations(locIds, callback) {
     document.querySelectorAll('.board-location').forEach(el => {
       const locId = el.getAttribute('data-location');
@@ -867,6 +879,22 @@ const BoardRenderer = {
   },
 
   onDragMove(e) {
+    // Handle resize drag
+    if (this.resizing) {
+      const pt = this.svgPoint(e);
+      const deltaY = pt.y - this.resizing.startY;
+      const newScale = Math.max(0.4, Math.min(3, this.resizing.startScale + deltaY * 0.01));
+      const id = this.resizing.id;
+      if (!this.customPositions[id]) {
+        const def = this.marketDefaults[id] || BOARD.locations[id] || BOARD.nonBuildable[id] || { x: 100, y: 100 };
+        this.customPositions[id] = { x: def.x, y: def.y, scale: newScale };
+      } else {
+        this.customPositions[id].scale = newScale;
+      }
+      this.render();
+      return;
+    }
+
     if (!this.dragging) return;
     const pt = this.svgPoint(e);
     const newX = Math.round(pt.x - this.dragOffset.x);
@@ -880,7 +908,6 @@ const BoardRenderer = {
       BOARD.nonBuildable[d.id].x = newX;
       BOARD.nonBuildable[d.id].y = newY;
     } else if (d.type === 'market') {
-      // Market panels: update defaults so getMarketPos picks them up
       this.marketDefaults[d.id] = { x: newX, y: newY };
     }
 
@@ -889,9 +916,14 @@ const BoardRenderer = {
   },
 
   onDragEnd() {
+    if (this.resizing) {
+      this.resizing = null;
+      clearTimeout(this.saveTimeout);
+      this.saveTimeout = setTimeout(() => this.savePositions(), 1500);
+      return;
+    }
     if (!this.dragging) return;
     this.dragging = null;
-    // Debounced save
     clearTimeout(this.saveTimeout);
     this.saveTimeout = setTimeout(() => this.savePositions(), 2000);
   },
