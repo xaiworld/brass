@@ -684,7 +684,7 @@ const BoardRenderer = {
     }
 
     // Serpentine U-turn arrows at row ends
-    const r = 3; // curve radius
+    const r = 2; // curve radius
     for (let row = 0; row < rows - 1; row++) {
       const by1 = startY + row * (boxSize + gap) + boxSize / 2;
       const by2 = startY + (row + 1) * (boxSize + gap) + boxSize / 2;
@@ -712,7 +712,7 @@ const BoardRenderer = {
     // Define arrowhead marker (if not already)
     if (!this.svg.querySelector('#arrowhead')) {
       const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-      defs.innerHTML = '<marker id="arrowhead" markerWidth="4" markerHeight="3" refX="4" refY="1.5" orient="auto"><polygon points="0,0 4,1.5 0,3" fill="#55555588"/></marker>';
+      defs.innerHTML = '<marker id="arrowhead" markerWidth="3" markerHeight="2" refX="3" refY="1" orient="auto"><polygon points="0,0 3,1 0,2" fill="#55555588"/></marker>';
       this.svg.insertBefore(defs, this.svg.firstChild);
     }
 
