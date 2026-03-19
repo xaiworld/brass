@@ -369,19 +369,23 @@ a:hover { text-decoration: underline; }
   align-items: stretch;
 }
 .floating-hand-cards .card {
-  width: auto !important;
+  /* All cards identical: height from container, width from ratio */
   height: 100%;
+  width: 0; /* let aspect-ratio determine it, not content */
+  min-width: 0 !important;
   aspect-ratio: 1 / 1.618;
-  min-width: 0;
-  min-height: 0;
   flex: 0 0 auto;
   overflow: hidden;
+  padding: 2px;
 }
 .floating-hand-cards .card .card-label {
-  font-size: clamp(6px, 1.2vh, 11px);
+  font-size: clamp(5px, 1.1vh, 10px);
   overflow-wrap: break-word;
   word-break: normal;
-  hyphens: none;
+  line-height: 1.1;
+}
+.floating-hand-cards .card .card-type {
+  font-size: clamp(4px, 0.8vh, 8px);
 }
 
 /* Action popup (on card hover) */
