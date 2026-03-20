@@ -547,6 +547,7 @@ body.minimal-mode .money-disc.bronze { background: transparent; color: #CD7F32; 
   overflow: hidden;
 }
 .log-entry { font-size: 10px; color: var(--text-muted); padding: 1px 0; font-family: monospace; }
+.log-ts { color: #555; font-size: 8px; }
 .log-filters { display: inline-flex; gap: 2px; margin-left: 8px; }
 .log-filter-btn {
   padding: 1px 5px; font-size: 8px; border: 1px solid #555;

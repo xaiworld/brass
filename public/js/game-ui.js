@@ -226,7 +226,7 @@ const GameUI = {
         + '</div>'
         + '<div class="player-stats-grid">'
         + '<span class="pstat"><span class="tile-vp-hex tile-vp-inline">' + p.vp + '</span></span>'
-        + '<span class="pstat" title="Income level"><span class="tile-inc-circle tile-inc-inline">' + p.income + '</span></span>'
+        + '<span class="pstat" title="Income: square ' + p.income + '"><span class="tile-inc-circle tile-inc-inline">' + (INCOME_TRACK[p.income] !== undefined ? (INCOME_TRACK[p.income] >= 0 ? '+' : '') + INCOME_TRACK[p.income] : p.income) + '</span></span>'
         + '<span class="pstat" title="Cards">' + cardCount + ' cards</span>'
         + '</div>'
         + '<div class="money-discs" title="£' + p.money + '">' + moneyDiscs + '</div>'
@@ -1071,6 +1071,7 @@ const GameUI = {
   // ============ LOG ============
 
   logFilter: 'all', // 'all' or a username
+  logShowTimestamps: false,
 
   setLogFilter(filter) {
     this.logFilter = filter;
@@ -1109,7 +1110,8 @@ const GameUI = {
         }
       }
       const style = color ? ' style="color:' + color + '"' : '';
-      return '<div class="log-entry"' + style + '>' + l.msg + '</div>';
+      const ts = (this.logShowTimestamps && l.ts) ? '<span class="log-ts">' + new Date(l.ts).toLocaleString() + '</span> ' : '';
+      return '<div class="log-entry"' + style + '>' + ts + l.msg + '</div>';
     }).join('');
   },
 
