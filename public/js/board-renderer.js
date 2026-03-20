@@ -241,8 +241,8 @@ const BoardRenderer = {
         const epRect = this.createAndAppend('rect', {
           x: wp.x - epW/2, y: wp.y - epH/2,
           width: epW, height: epH, rx: 3,
-          fill: '#2196F322',
-          stroke: this.editMode ? '#ffcc00' : '#2196F388',
+          fill: '#0d1a2acc',
+          stroke: this.editMode ? '#ffcc00' : '#2196F366',
           'stroke-width': this.editMode ? 1.5 : 1,
           'data-external-port': id,
           class: 'board-external-port',
@@ -799,41 +799,42 @@ const BoardRenderer = {
 
     if (slot.owner !== null) {
       // Filled slot
-      const fillColor = BOARD.playerColors[slot.owner];
+      const pColor = BOARD.playerColors[slot.owner];
+      const fillColor = slot.flipped ? (pColor + '88') : pColor; // dimmed if flipped
 
       this.createAndAppend('rect', {
         x: cx - half, y: cy - half,
         width: size, height: size,
         rx: 2,
         fill: fillColor,
-        stroke: BOARD.playerColors[slot.owner],
-        'stroke-width': slot.flipped ? 2.5 : 1,
+        stroke: slot.flipped ? (pColor + '66') : pColor,
+        'stroke-width': slot.flipped ? 1 : 1,
         'data-location': locId, 'data-slot': index,
         class: 'board-slot filled'
       });
 
-      // Industry color stripe on top (dim, matching empty slot colors)
+      // Industry color stripe on top
       const stripeColors = {
-        cottonMill: '#f5f0ea55', coalMine: '#33333366', ironWorks: '#d4740e44',
-        port: '#2196F344', shipyard: '#6d432a44'
+        cottonMill: '#f5f0ea88', coalMine: '#55555588', ironWorks: '#d4740e77',
+        port: '#2196F377', shipyard: '#6d432a77'
       };
       this.createAndAppend('rect', {
         x: cx - half, y: cy - half,
         width: size, height: 1.8, rx: 1,
-        fill: stripeColors[slot.industryType] || '#88888844',
+        fill: stripeColors[slot.industryType] || '#88888866',
         'pointer-events': 'none'
       });
 
-      // Flipped: hexagon outline ON TOP of slot
+      // Flipped: tight hexagon outline ON TOP
       if (slot.flipped) {
-        const hr = half + 3;
+        const hr = half + 1.5;
         const hexPts = [0,1,2,3,4,5].map(n => {
           const a = Math.PI / 180 * (60 * n - 90);
           return (cx + hr * Math.cos(a)).toFixed(1) + ',' + (cy + hr * Math.sin(a)).toFixed(1);
         }).join(' ');
         this.createAndAppend('polygon', {
           points: hexPts,
-          fill: 'none', stroke: '#cc3366aa', 'stroke-width': 1.2
+          fill: 'none', stroke: '#cc3366cc', 'stroke-width': 1.2
         });
       }
 
