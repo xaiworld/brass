@@ -192,6 +192,10 @@ a:hover { text-decoration: underline; }
 }
 .pstat { display: inline-flex; align-items: center; gap: 1px; }
 
+/* Turn navigator */
+.turn-nav { padding: 4px 6px !important; }
+.turn-nav .btn { font-size: 9px !important; padding: 1px 4px !important; min-width: 18px; }
+
 /* Industry legend */
 .legend-panel { font-size: 9px; }
 .legend-row { display: flex; align-items: center; gap: 4px; padding: 1px 0; }

@@ -200,6 +200,91 @@ const GameUI = {
     return vps;
   },
 
+  // ============ TURN NAVIGATOR ============
+
+  stateHistory: [],  // array of {state, version, logLen}
+  navIndex: -1,      // -1 = live, 0+ = viewing history
+  isViewingHistory: false,
+
+  pushStateSnapshot() {
+    // Store current state in history (deduplicate by version)
+    const last = this.stateHistory[this.stateHistory.length - 1];
+    if (last && last.version === stateVersion) return;
+    this.stateHistory.push({
+      state: JSON.parse(JSON.stringify(gameState)),
+      version: stateVersion,
+      logLen: (gameState.log || []).length
+    });
+    // Keep max 200 snapshots
+    if (this.stateHistory.length > 200) this.stateHistory.shift();
+  },
+
+  navFirst() {
+    if (this.stateHistory.length === 0) return;
+    this.navIndex = 0;
+    this.showHistoryState();
+  },
+
+  navPrev() {
+    if (this.stateHistory.length === 0) return;
+    if (this.navIndex === -1) {
+      this.navIndex = this.stateHistory.length - 2;
+    } else {
+      this.navIndex = Math.max(0, this.navIndex - 1);
+    }
+    this.showHistoryState();
+  },
+
+  navNext() {
+    if (this.navIndex === -1) return;
+    this.navIndex++;
+    if (this.navIndex >= this.stateHistory.length - 1) {
+      this.navLive();
+      return;
+    }
+    this.showHistoryState();
+  },
+
+  navLive() {
+    this.navIndex = -1;
+    this.isViewingHistory = false;
+    this.updateNavLabel();
+    this.updateAll();
+  },
+
+  showHistoryState() {
+    if (this.navIndex < 0 || this.navIndex >= this.stateHistory.length) {
+      this.navLive();
+      return;
+    }
+    this.isViewingHistory = true;
+    const snap = this.stateHistory[this.navIndex];
+    // Temporarily replace gameState for rendering
+    const realState = gameState;
+    gameState = snap.state;
+    this.updateNavLabel();
+    this.updateGameInfo();
+    this.updatePlayerBar();
+    this.updateLog();
+    BoardRenderer.render();
+    // Restore real state (don't affect polling/actions)
+    gameState = realState;
+  },
+
+  updateNavLabel() {
+    const label = document.getElementById('turn-nav-label');
+    if (!label) return;
+    if (this.navIndex === -1) {
+      label.textContent = 'Live';
+      label.style.color = '#2ecc71';
+    } else {
+      const snap = this.stateHistory[this.navIndex];
+      const era = snap.state.era === 'canal' ? 'C' : 'R';
+      label.textContent = (this.navIndex + 1) + '/' + this.stateHistory.length + ' [' + era + snap.state.round + ']';
+      label.style.color = '#e94560';
+    }
+  },
+
   leftPanelCollapsed: false,
 
   toggleLeftPanel() {
@@ -211,6 +296,12 @@ const GameUI = {
   },
 
   updateAll() {
+    this.pushStateSnapshot();
+    // If viewing history, don't overwrite the view
+    if (this.isViewingHistory) {
+      this.updateNavLabel();
+      return;
+    }
     this.updateGameInfo();
     this.updatePlayerBar();
     this.updateActionPanel();
@@ -218,6 +309,7 @@ const GameUI = {
     this.updateMat();
     this.updateLog();
     this.checkBotAnnouncement();
+    this.updateNavLabel();
     BoardRenderer.render();
   },
 
@@ -309,6 +401,10 @@ const GameUI = {
 
   updateActionPanel() {
     const panel = document.getElementById('action-panel');
+    if (this.isViewingHistory) {
+      panel.innerHTML = '<p class="muted" style="color:#e94560">Viewing history — click ⏭ for live</p>';
+      return;
+    }
     const s = gameState;
     const currentSeat = s.turnOrder[s.currentPlayerIndex];
     const myPlayer = s.players.find(p => p.userId === USER_ID);
