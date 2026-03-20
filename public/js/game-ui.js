@@ -397,13 +397,40 @@ const GameUI = {
 
     if (!p.industryType) {
       const myPlayer = gameState.players.find(pl => pl.userId === USER_ID);
+      const cardInfo = parseCardId(this.selectedCard);
+
+      // Filter available industry types based on card type
+      let availableTypes = Object.entries(myPlayer.industryMat).filter(([_, levels]) => levels.length > 0);
+
+      if (cardInfo.type === 'industry') {
+        // Industry card: can only build that specific industry
+        availableTypes = availableTypes.filter(([type]) => type === cardInfo.industry);
+      } else if (cardInfo.type === 'location') {
+        // Location card: only types allowed at that location
+        const loc = gameState.board.locations[cardInfo.location];
+        if (loc) {
+          const allowedTypes = new Set();
+          for (const slot of loc.slots) {
+            for (const t of slot.allowed) allowedTypes.add(t);
+          }
+          availableTypes = availableTypes.filter(([type]) => allowedTypes.has(type));
+        }
+      }
+
+      if (availableTypes.length === 1) {
+        // Auto-select if only one option
+        p.industryType = availableTypes[0][0];
+        this.updateActionPanel();
+        return;
+      }
+
       panel.innerHTML = `
         <h4>Build Industry</h4>
-        <p>Card: ${this.selectedCard}. Choose industry type:</p>
+        <p>Choose industry type:</p>
         <div class="industry-options">
-          ${Object.entries(myPlayer.industryMat).filter(([_, levels]) => levels.length > 0).map(([type, levels]) =>
+          ${availableTypes.map(([type, levels]) =>
             `<button class="btn" onclick="GameUI.selectIndustryType('${type}')">
-              ${type} (L${levels[0]})</button>`
+              ${INDUSTRIES[type]?.name || type} (L${levels[0]})</button>`
           ).join('')}
         </div>
         <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
