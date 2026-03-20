@@ -354,18 +354,39 @@ const GameUI = {
         } else {
           const myPlayer = gameState.players.find(p => p.userId === USER_ID);
           const develops = this.actionParams.develops || [];
-          panel.innerHTML = `
-            <h4>Develop (${develops.length}/2 tiles)</h4>
-            <p>Choose industry tiles to remove from your mat:</p>
-            <div class="develop-options">
-              ${Object.entries(myPlayer.industryMat).map(([type, levels]) =>
-                levels.length > 0 ? `<button class="btn ${develops.includes(type) ? 'btn-primary' : ''}"
-                  onclick="GameUI.toggleDevelop('${type}')">${type} L${levels[0]}</button>` : ''
-              ).join('')}
-            </div>
-            ${develops.length > 0 ? `<button class="btn btn-primary" onclick="GameUI.submitAction()">Confirm Develop</button>` : ''}
-            <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
-          `;
+          if (develops.length === 0) {
+            // Pick first tile
+            panel.innerHTML = `
+              <h4>Develop — choose 1st tile to remove:</h4>
+              <div class="develop-options">
+                ${Object.entries(myPlayer.industryMat).map(([type, levels]) =>
+                  levels.length > 0 ? `<button class="btn"
+                    onclick="GameUI.addDevelop('${type}')">${INDUSTRIES[type]?.name || type} L${levels[0]}</button>` : ''
+                ).join('')}
+              </div>
+              <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
+            `;
+          } else if (develops.length === 1) {
+            // Ask for second tile
+            const firstName = (INDUSTRIES[develops[0]]?.name || develops[0]);
+            panel.innerHTML = `
+              <h4>Develop — removing ${firstName}</h4>
+              <p>Add a 2nd tile? (costs 1 more iron)</p>
+              <div class="develop-options">
+                ${Object.entries(myPlayer.industryMat).map(([type, levels]) => {
+                  // Account for already-selected tile
+                  const remaining = type === develops[0] ? levels.length - 1 : levels.length;
+                  return remaining > 0 ? `<button class="btn"
+                    onclick="GameUI.addDevelop('${type}')">${INDUSTRIES[type]?.name || type} L${type === develops[0] ? levels[1] || levels[0] : levels[0]}</button>` : '';
+                }).join('')}
+              </div>
+              <button class="btn btn-primary" onclick="GameUI.submitAction()">Just 1 tile</button>
+              <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
+            `;
+          } else {
+            // 2 tiles selected, submit
+            this.submitAction();
+          }
         }
         break;
 
@@ -635,12 +656,9 @@ const GameUI = {
     this.updateActionPanel();
   },
 
-  toggleDevelop(type) {
+  addDevelop(type) {
     if (!this.actionParams.develops) this.actionParams.develops = [];
-    const idx = this.actionParams.develops.indexOf(type);
-    if (idx >= 0) {
-      this.actionParams.develops.splice(idx, 1);
-    } else if (this.actionParams.develops.length < 2) {
+    if (this.actionParams.develops.length < 2) {
       this.actionParams.develops.push(type);
     }
     this.updateActionPanel();
