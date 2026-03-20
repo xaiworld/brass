@@ -292,6 +292,7 @@ const GameUI = {
         <button class="btn action-btn" onclick="GameUI.startAction('takeLoan')">Take Loan</button>
         <button class="btn action-btn" onclick="GameUI.startAction('develop')">Develop</button>
         <button class="btn action-btn" onclick="GameUI.startAction('pass')">Pass</button>
+        ${s.actionsRemaining >= 2 ? '<button class="btn action-btn" onclick="GameUI.startAction(\'wildBuild\')">Wild Build (2 cards)</button>' : ''}
       </div>
     `;
   },
@@ -400,6 +401,10 @@ const GameUI = {
 
       case 'sellCotton':
         this.renderSellCottonFlow(panel);
+        break;
+
+      case 'wildBuild':
+        this.renderWildBuildFlow(panel);
         break;
 
       default:
@@ -640,6 +645,146 @@ const GameUI = {
       }];
       this.submitAction();
     });
+  },
+
+  renderWildBuildFlow(panel) {
+    const p = this.actionParams;
+    const myPlayer = gameState.players.find(pl => pl.userId === USER_ID);
+
+    // Step 1: select first card
+    if (!p.cardPlayed) {
+      panel.innerHTML = '<h4>Wild Build (uses 2 actions)</h4><p>Select 1st card to discard:</p>'
+        + '<p class="muted">Click a card in your hand</p>'
+        + '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
+      if (this.selectedCard) {
+        p.cardPlayed = this.selectedCard;
+        this.selectedCard = null;
+        this.updateHand();
+        this.updateActionPanel();
+      }
+      return;
+    }
+
+    // Step 2: select second card
+    if (!p.secondCard) {
+      panel.innerHTML = '<h4>Wild Build — select 2nd card</h4>'
+        + '<p>1st card: ' + p.cardPlayed + '</p>'
+        + '<p>Click another card in your hand</p>'
+        + '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
+      if (this.selectedCard && this.selectedCard !== p.cardPlayed) {
+        p.secondCard = this.selectedCard;
+        this.selectedCard = null;
+        this.updateHand();
+        this.updateActionPanel();
+      }
+      return;
+    }
+
+    // Step 3: choose industry type
+    if (!p.industryType) {
+      let html = '<h4>Wild Build — choose industry:</h4><div class="industry-options">';
+      for (const [type, levels] of Object.entries(myPlayer.industryMat)) {
+        if (levels.length === 0) continue;
+        const level = levels[0];
+        if (gameState.era === 'rail' && level <= 1) continue;
+        if (type === 'shipyard' && level === 0) continue;
+        html += '<button class="btn" onclick="GameUI.selectIndustryType(\'' + type + '\')">' + (INDUSTRIES[type]?.name || type) + ' (L' + level + ')</button>';
+      }
+      html += '</div><button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
+      panel.innerHTML = html;
+      return;
+    }
+
+    // Step 4: choose any location (no card restriction)
+    if (!p.location) {
+      const validLocs = [];
+      for (const [locId, loc] of Object.entries(gameState.board.locations)) {
+        for (let i = 0; i < loc.slots.length; i++) {
+          const slot = loc.slots[i];
+          if (!slot.allowed.includes(p.industryType)) continue;
+          if (slot.owner !== null && slot.owner !== myPlayer.seat) continue;
+          if (gameState.era === 'canal' && loc.slots.some(s => s.owner === myPlayer.seat) && slot.owner !== myPlayer.seat) continue;
+          validLocs.push(locId);
+          break;
+        }
+      }
+      BoardRenderer.highlightLocations([...new Set(validLocs)], (locId) => {
+        p.location = locId;
+        const loc = gameState.board.locations[locId];
+        const validSlots = [];
+        for (let i = 0; i < loc.slots.length; i++) {
+          if (loc.slots[i].allowed.includes(p.industryType) && (loc.slots[i].owner === null || loc.slots[i].owner === myPlayer.seat)) {
+            validSlots.push(i);
+          }
+        }
+        if (validSlots.length === 1) p.slotIndex = validSlots[0];
+        this.updateActionPanel();
+      });
+      panel.innerHTML = '<h4>Wild Build ' + (INDUSTRIES[p.industryType]?.name || '') + '</h4>'
+        + '<p>Click any valid location on the board:</p>'
+        + '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
+      return;
+    }
+
+    // Step 5: choose slot if multiple
+    if (p.slotIndex === undefined) {
+      const loc = gameState.board.locations[p.location];
+      const validSlots = [];
+      for (let i = 0; i < loc.slots.length; i++) {
+        if (loc.slots[i].allowed.includes(p.industryType) && (loc.slots[i].owner === null || loc.slots[i].owner === myPlayer.seat)) {
+          validSlots.push(i);
+        }
+      }
+      let html = '<h4>Wild Build at ' + (BOARD.locations[p.location]?.name || p.location) + '</h4><p>Choose slot:</p>';
+      for (const i of validSlots) {
+        html += '<button class="btn" onclick="GameUI.actionParams.slotIndex=' + i + ';GameUI.submitWildBuild()">Slot ' + (i+1) + '</button>';
+      }
+      html += '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
+      panel.innerHTML = html;
+      return;
+    }
+
+    // Ready
+    this.submitWildBuild();
+  },
+
+  submitWildBuild() {
+    const p = this.actionParams;
+    // Wild build is submitted as a regular buildIndustry with a special flag
+    const action = {
+      type: 'buildIndustry',
+      location: p.location,
+      slotIndex: p.slotIndex,
+      industryType: p.industryType,
+      cardPlayed: p.cardPlayed,
+      secondCard: p.secondCard,
+      wildBuild: true
+    };
+    this.selectedCard = p.cardPlayed; // for submitAction
+    this.actionParams = action;
+    this.actionParams.type = 'buildIndustry';
+    this.submitActionDirect(action);
+  },
+
+  async submitActionDirect(action) {
+    try {
+      const res = await fetch('/api/games/' + GAME_ID + '/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(action)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Action failed');
+        return;
+      }
+      gameState = data.state;
+      stateVersion = data.version;
+      this.cancelAction();
+      this.updateAll();
+    } catch (e) {
+      alert('Network error');
+    }
   },
 
   sellToDistant() {
