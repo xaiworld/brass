@@ -667,13 +667,12 @@ const GameUI = {
     // Choose port or distant market
     panel.innerHTML = `
       <h4>Sell Cotton from ${BOARD.locations[this.actionParams.millLocation].name}</h4>
-      <p>Choose where to sell:</p>
+      <p>Click an unflipped port or an external port (P) to sell:</p>
       <button class="btn" onclick="GameUI.sellToDistant()">Distant Market (demand: ${gameState.distantMarketDemand})</button>
-      <p>Or click an unflipped port on the board</p>
       <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
     `;
 
-    // Highlight unflipped ports
+    // Highlight unflipped player-built ports
     const ports = [];
     for (const [locId, loc] of Object.entries(gameState.board.locations)) {
       for (let i = 0; i < loc.slots.length; i++) {
@@ -691,6 +690,15 @@ const GameUI = {
         target: { type: 'port', location: locId, slotIndex: port.slotIndex }
       }];
       this.submitAction();
+    });
+
+    // Also make external ports clickable for distant market sell
+    document.querySelectorAll('.board-external-port').forEach(el => {
+      el.classList.add('highlight');
+      el.style.cursor = 'pointer';
+      el.onclick = () => {
+        this.sellToDistant();
+      };
     });
   },
 

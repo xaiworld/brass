@@ -262,6 +262,12 @@ a:hover { text-decoration: underline; }
   50% { opacity: 0.6; }
 }
 .board-slot { cursor: pointer; }
+.board-external-port.highlight {
+  fill: #2196F344 !important;
+  stroke: var(--gold) !important;
+  stroke-width: 2 !important;
+  animation: pulse 1s infinite;
+}
 
 /* Right panel: actions + hand + mat (collapsible) */
 .right-panel {

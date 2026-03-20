@@ -236,24 +236,32 @@ const BoardRenderer = {
       const isEP = wp.isExternalPort;
 
       if (isEP) {
-        // External port: circle with "E" marker
-        const circle = this.createAndAppend('circle', {
-          cx: wp.x, cy: wp.y, r: 10,
-          fill: '#1a2a3acc',
-          stroke: this.editMode ? '#ffcc00' : '#4488cc',
-          'stroke-width': 1.5
+        // External port: port-styled rectangle with "P"
+        const epW = 20, epH = 22;
+        const epRect = this.createAndAppend('rect', {
+          x: wp.x - epW/2, y: wp.y - epH/2,
+          width: epW, height: epH, rx: 3,
+          fill: '#2196F322',
+          stroke: this.editMode ? '#ffcc00' : '#2196F388',
+          'stroke-width': this.editMode ? 1.5 : 1,
+          'data-external-port': id,
+          class: 'board-external-port',
+          cursor: 'pointer'
         });
-        circle.addEventListener('mousedown', (e) => this.onDragStart(e, id, 'nonBuildable'));
+        epRect.addEventListener('mousedown', (e) => this.onDragStart(e, id, 'nonBuildable'));
 
+        // Port "P" icon
         this.createAndAppend('text', {
-          x: wp.x, y: wp.y + 3,
-          'text-anchor': 'middle', 'font-size': '8', fill: '#88ccff',
+          x: wp.x, y: wp.y,
+          'text-anchor': 'middle', 'dominant-baseline': 'central',
+          'font-size': '9', fill: '#2196F3aa',
           'font-weight': 'bold', 'pointer-events': 'none'
-        }).textContent = 'E';
+        }).textContent = 'P';
 
+        // Name below
         this.createAndAppend('text', {
-          x: wp.x, y: wp.y + 19,
-          'text-anchor': 'middle', 'font-size': '7', fill: '#88ccff',
+          x: wp.x, y: wp.y + epH/2 + 8,
+          'text-anchor': 'middle', 'font-size': '6', fill: '#88ccff',
           'pointer-events': 'none'
         }).textContent = wp.name;
       } else {
