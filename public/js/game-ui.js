@@ -1128,7 +1128,12 @@ const GameUI = {
         }
       }
       const style = color ? ' style="color:' + color + '"' : '';
-      const ts = (this.logShowTimestamps && l.ts) ? '<span class="log-ts">' + new Date(l.ts).toLocaleString() + '</span> ' : '';
+      let ts = '';
+      if (this.logShowTimestamps && l.ts) {
+        const d = new Date(l.ts);
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        ts = '<span class="log-ts">' + d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ' ' + d.toLocaleTimeString() + '</span> ';
+      }
       return '<div class="log-entry"' + style + '>' + ts + l.msg + '</div>';
     }).join('');
   },
