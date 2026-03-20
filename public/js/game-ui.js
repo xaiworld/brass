@@ -156,6 +156,50 @@ const GameUI = {
     document.addEventListener('mouseup', () => { dragging = false; });
   },
 
+  // Calculate real-time projected VP for each player
+  calculateLiveVP() {
+    const s = gameState;
+    const vps = s.players.map(() => 0);
+
+    // VP from scored eras (already in p.vp)
+    for (let i = 0; i < s.players.length; i++) {
+      vps[i] += s.players[i].vp;
+    }
+
+    // VP from currently flipped tiles (not yet scored if mid-era)
+    for (const loc of Object.values(s.board.locations)) {
+      for (const slot of loc.slots) {
+        if (slot.flipped && slot.owner !== null) {
+          const tileData = INDUSTRIES[slot.industryType]?.levels[slot.level];
+          if (tileData) vps[slot.owner] += tileData.vp;
+        }
+      }
+    }
+
+    // VP from built links
+    for (const link of Object.values(s.board.links)) {
+      if (link.owner !== null && link.type) {
+        let linkVP = 0;
+        // Count flipped tiles at each end
+        for (const locId of [link.from, link.to]) {
+          const loc = s.board.locations[locId];
+          if (!loc) continue;
+          for (const slot of loc.slots) {
+            if (slot.flipped && slot.owner !== null) linkVP++;
+          }
+        }
+        vps[link.owner] += linkVP;
+      }
+    }
+
+    // VP from money (1 per £10)
+    for (let i = 0; i < s.players.length; i++) {
+      vps[i] += Math.floor(s.players[i].money / 10);
+    }
+
+    return vps;
+  },
+
   leftPanelCollapsed: false,
 
   toggleLeftPanel() {
@@ -211,10 +255,13 @@ const GameUI = {
     const state = gameState;
     const currentSeat = state.turnOrder[state.currentPlayerIndex];
 
-    bar.innerHTML = state.players.map(p => {
+    const liveVPs = this.calculateLiveVP();
+
+    bar.innerHTML = state.players.map((p, idx) => {
       const isCurrent = p.seat === currentSeat && state.phase === 'actions';
       const isMe = p.userId === USER_ID;
       const cardCount = (p.hand && p.hand.length > 0) ? p.hand.length : (p.handCount || 0);
+      const liveVP = liveVPs[idx] || 0;
       const fives = Math.floor(p.money / 5);
       const ones = p.money % 5;
       const moneyDiscs = Array(fives).fill('<span class="money-disc silver">5</span>').join('')
@@ -225,7 +272,7 @@ const GameUI = {
         + p.username + (p.isBot ? ' (Bot)' : '') + (isCurrent ? ' ▸' : '')
         + '</div>'
         + '<div class="player-stats-grid">'
-        + '<span class="pstat"><span class="tile-vp-hex tile-vp-inline">' + p.vp + '</span></span>'
+        + '<span class="pstat"><span class="tile-vp-hex tile-vp-inline">' + liveVP + '</span></span>'
         + '<span class="pstat" title="Income: square ' + p.income + '"><span class="tile-inc-circle tile-inc-inline">' + (INCOME_TRACK[p.income] !== undefined ? (INCOME_TRACK[p.income] >= 0 ? '+' : '') + INCOME_TRACK[p.income] : p.income) + '</span></span>'
         + '<span class="pstat" title="Cards">' + cardCount + ' cards</span>'
         + '</div>'

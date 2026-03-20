@@ -581,7 +581,7 @@ const BoardRenderer = {
         'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': '7',
         fill: this.minimalMode ? pColor : '#fff',
         'font-weight': 'bold', 'pointer-events': 'none'
-      }).textContent = p.vp;
+      }).textContent = (typeof GameUI !== 'undefined' && GameUI.calculateLiveVP) ? GameUI.calculateLiveVP()[i] || 0 : p.vp;
       // Name below
       // Name centered between hexagon bottom and panel bottom
       const hexBottom = pos.y + 18 + 9; // hcy + hr
@@ -793,19 +793,6 @@ const BoardRenderer = {
       // Filled slot
       const fillColor = BOARD.playerColors[slot.owner];
 
-      // Flipped: hexagon outline behind the slot
-      if (slot.flipped) {
-        const hr = half + 3;
-        const hexPts = [0,1,2,3,4,5].map(n => {
-          const a = Math.PI / 180 * (60 * n - 90);
-          return (cx + hr * Math.cos(a)).toFixed(1) + ',' + (cy + hr * Math.sin(a)).toFixed(1);
-        }).join(' ');
-        this.createAndAppend('polygon', {
-          points: hexPts,
-          fill: 'none', stroke: '#cc336688', 'stroke-width': 1
-        });
-      }
-
       this.createAndAppend('rect', {
         x: cx - half, y: cy - half,
         width: size, height: size,
@@ -817,17 +804,30 @@ const BoardRenderer = {
         class: 'board-slot filled'
       });
 
-      // Industry color stripe on top
+      // Industry color stripe on top (dim, matching empty slot colors)
       const stripeColors = {
-        cottonMill: '#f5f0ea', coalMine: '#555', ironWorks: '#d4740e',
-        port: '#2196F3', shipyard: '#6d432a'
+        cottonMill: '#f5f0ea55', coalMine: '#33333366', ironWorks: '#d4740e44',
+        port: '#2196F344', shipyard: '#6d432a44'
       };
       this.createAndAppend('rect', {
         x: cx - half, y: cy - half,
-        width: size, height: 2.5, rx: 1,
-        fill: stripeColors[slot.industryType] || '#888',
+        width: size, height: 1.8, rx: 1,
+        fill: stripeColors[slot.industryType] || '#88888844',
         'pointer-events': 'none'
       });
+
+      // Flipped: hexagon outline ON TOP of slot
+      if (slot.flipped) {
+        const hr = half + 3;
+        const hexPts = [0,1,2,3,4,5].map(n => {
+          const a = Math.PI / 180 * (60 * n - 90);
+          return (cx + hr * Math.cos(a)).toFixed(1) + ',' + (cy + hr * Math.sin(a)).toFixed(1);
+        }).join(' ');
+        this.createAndAppend('polygon', {
+          points: hexPts,
+          fill: 'none', stroke: '#cc3366aa', 'stroke-width': 1.2
+        });
+      }
 
       if (!this.hideIcons) {
         this.createAndAppend('text', {
