@@ -1343,8 +1343,12 @@ const GameUI = {
           html += '</div>';
           if (showDetail && ld) {
             html += '<div class="mat-level-stats">';
-            html += '<span class="tile-inc-circle tile-inc-inline">+' + ld.income + '</span>';
-            html += '<span class="tile-vp-hex tile-vp-inline">' + ld.vp + '</span>';
+            html += '£' + ld.cost;
+            if (ld.coal) html += ' <span style="color:#555" title="Coal cubes needed">' + ld.coal + '⬛</span>';
+            if (ld.iron) html += ' <span style="color:#d4740e" title="Iron cubes needed">' + ld.iron + '🟧</span>';
+            if (ld.cubes) html += ' <span style="color:#888" title="Resource cubes placed">[' + ld.cubes + ']</span>';
+            html += ' <span class="tile-inc-circle tile-inc-inline">+' + ld.income + '</span>';
+            html += ' <span class="tile-vp-hex tile-vp-inline">' + ld.vp + '</span>';
             html += '</div>';
           }
           html += '</div>';

@@ -259,4 +259,17 @@ router.post('/admin/toggle-training', requireLogin, (req, res) => {
   res.redirect('/lobby');
 });
 
+// Reset training data (xai admin only)
+router.post('/admin/reset-training', requireLogin, (req, res) => {
+  if (req.session.user.username !== 'xai') return res.redirect('/lobby');
+  if (isTrainingActive()) stopTraining();
+  const d = db.get();
+  d.trainingResults = [];
+  db.save();
+  const { resetTierAssignments } = require('../lib/bot-strategies');
+  resetTierAssignments();
+  console.log('[Training] All training data reset');
+  res.redirect('/lobby');
+});
+
 module.exports = router;
