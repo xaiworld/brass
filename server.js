@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 const path = require('path');
+const fs = require('fs');
 const db = require('./lib/db');
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const sessionDir = process.env.SESSION_DIR || path.join(__dirname, 'data', 'sessions');
+if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 app.use(session({
   store: new FileStore({ path: sessionDir, ttl: 365 * 24 * 60 * 60, retries: 0, logFn: function(){} }),
   secret: process.env.SESSION_SECRET || 'brass-dev-secret-change-me',
@@ -58,6 +60,9 @@ app.get('/', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Brass: Lancashire running on http://localhost:${PORT}`);
+// Health check for Render
+app.get('/health', (req, res) => res.send('OK'));
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Brass: Lancashire running on port ${PORT}`);
 });
