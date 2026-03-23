@@ -777,18 +777,34 @@ const GameUI = {
       return;
     }
 
-    // Rail era: ask about second link
-    if (gameState.era === 'rail') {
-      if (!this.actionParams.secondLinkId && !this.actionParams.singleConfirmed) {
-        panel.innerHTML = `
-          <h4>Build Rail</h4>
-          <p>Build a second rail link? (costs £15 total for 2, + 2 coal)</p>
-          <button class="btn btn-primary" onclick="GameUI.confirmSingleRail()">Just One (£5 + 1 coal)</button>
-          <button class="btn" onclick="GameUI.startSecondLink()">Add Second Link</button>
-          <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
-        `;
-        return;
-      }
+    // Rail era: both links selected — confirm
+    if (gameState.era === 'rail' && this.actionParams.secondLinkId) {
+      const l1 = gameState.board.links[this.actionParams.linkId];
+      const l2 = gameState.board.links[this.actionParams.secondLinkId];
+      const name = (l) => (BOARD.locations[l?.from]?.name || BOARD.nonBuildable[l?.from]?.name || '?') + '—' + (BOARD.locations[l?.to]?.name || BOARD.nonBuildable[l?.to]?.name || '?');
+      panel.innerHTML = `
+        <h4>Build 2 Rails (£15 + 2 coal)</h4>
+        <p>1: ${name(l1)}</p>
+        <p>2: ${name(l2)}</p>
+        <button class="btn btn-primary" onclick="GameUI.submitAction()">Build Both</button>
+        <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
+      `;
+      return;
+    }
+
+    // Rail era: first link selected, ask about second
+    if (gameState.era === 'rail' && !this.actionParams.secondLinkId && !this.actionParams.singleConfirmed) {
+      const linkState = gameState.board.links[this.actionParams.linkId];
+      const fromName = BOARD.locations[linkState?.from]?.name || BOARD.nonBuildable[linkState?.from]?.name || '?';
+      const toName = BOARD.locations[linkState?.to]?.name || BOARD.nonBuildable[linkState?.to]?.name || '?';
+      panel.innerHTML = `
+        <h4>Rail: ${fromName} — ${toName}</h4>
+        <p>Add a second rail? (2 rails = £15 + 2 coal instead of £5 + 1 coal)</p>
+        <button class="btn" onclick="GameUI.startSecondLink()">Add Second Rail</button>
+        <button class="btn btn-primary" onclick="GameUI.confirmSingleRail()">Done (1 rail, £5 + 1 coal)</button>
+        <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
+      `;
+      return;
     }
 
     this.submitAction();
@@ -810,7 +826,7 @@ const GameUI = {
 
     BoardRenderer.highlightLinks(validLinks, (linkId) => {
       this.actionParams.secondLinkId = linkId;
-      this.submitAction();
+      this.updateActionPanel();
     });
   },
 
