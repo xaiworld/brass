@@ -422,7 +422,10 @@ const BoardRenderer = {
     for (let i = 0; i < 8; i++) {
       const slotIdx = i; // top = slot 0 (cheapest £1), bottom = slot 7 (expensive £4)
       const sy = startY + i * (slotSize + gap);
-      const filled = slotIdx < cubes;
+      // Cubes fill from bottom (expensive) up. Top empties first when buying.
+      // Slot i is filled if: (MARKET_SLOTS - cubes) <= slotIdx is false
+      // i.e., the top (8 - cubes) slots are empty
+      const filled = i >= (8 - cubes);
       const price = slotPrices[slotIdx];
 
       this.createAndAppend('rect', {
