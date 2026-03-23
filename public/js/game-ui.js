@@ -777,19 +777,25 @@ const GameUI = {
       return;
     }
 
-    // Can optionally build second link in rail era
-    if (gameState.era === 'rail' && !this.actionParams.secondAsked) {
-      this.actionParams.secondAsked = true;
-      panel.innerHTML = `
-        <h4>Build Link</h4>
-        <p>Build a second rail link? (costs £15 total for 2)</p>
-        <button class="btn btn-primary" onclick="GameUI.submitAction()">Just One (£5)</button>
-        <button class="btn" onclick="GameUI.startSecondLink()">Add Second Link</button>
-        <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
-      `;
-      return;
+    // Rail era: ask about second link
+    if (gameState.era === 'rail') {
+      if (!this.actionParams.secondLinkId && !this.actionParams.singleConfirmed) {
+        panel.innerHTML = `
+          <h4>Build Rail</h4>
+          <p>Build a second rail link? (costs £15 total for 2, + 2 coal)</p>
+          <button class="btn btn-primary" onclick="GameUI.confirmSingleRail()">Just One (£5 + 1 coal)</button>
+          <button class="btn" onclick="GameUI.startSecondLink()">Add Second Link</button>
+          <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
+        `;
+        return;
+      }
     }
 
+    this.submitAction();
+  },
+
+  confirmSingleRail() {
+    this.actionParams.singleConfirmed = true;
     this.submitAction();
   },
 
