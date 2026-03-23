@@ -1308,8 +1308,9 @@ const GameUI = {
 
   quickAction(type, cardId) {
     this.hideActionPopup();
-    this.selectedCard = cardId;
     this.startAction(type);
+    this.selectedCard = cardId; // set AFTER startAction (which clears it)
+    this.updateActionPanel();
     this.updateHand();
   },
 
