@@ -874,6 +874,23 @@ const GameUI = {
       return;
     }
 
+    // Pick a specific port slot at a location with multiple ports
+    if (this.actionParams._pickingPortSlot) {
+      const pps = this.actionParams._pickingPortSlot;
+      const cm = this.actionParams._currentMill;
+      const locName = BOARD.locations[pps.locId]?.name || pps.locId;
+      let html = '<h4>Choose port at ' + locName + '</h4>';
+      for (const p of pps.ports) {
+        const slot = gameState.board.locations[pps.locId].slots[p.slotIndex];
+        const ownerName = gameState.players[slot.owner]?.username || '?';
+        const color = BOARD.playerColors[slot.owner];
+        html += '<button class="btn" style="border-left:3px solid ' + color + '" onclick="GameUI.selectPortSlot(' + p.slotIndex + ')">Port L' + slot.level + ' (' + ownerName + ')</button> ';
+      }
+      html += '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
+      panel.innerHTML = html;
+      return;
+    }
+
     // Pick a target (port or distant)
     const cm = this.actionParams._currentMill;
     panel.innerHTML = '<h4>Sell from ' + (BOARD.locations[cm.locId]?.name || cm.locId) + '</h4>' +
@@ -891,15 +908,22 @@ const GameUI = {
         }
       }
     }
-    BoardRenderer.highlightLocations(ports.map(p => p.locId), (locId) => {
-      const port = ports.find(p => p.locId === locId);
-      sales.push({
-        millLocation: cm.locId, millSlot: cm.slotIndex,
-        target: { type: 'port', location: locId, slotIndex: port.slotIndex }
-      });
-      this.actionParams._pickingTarget = false;
-      this.actionParams._currentMill = null;
-      this.updateActionPanel();
+    BoardRenderer.highlightLocations([...new Set(ports.map(p => p.locId))], (locId) => {
+      const portsAtLoc = ports.filter(p => p.locId === locId);
+      if (portsAtLoc.length === 1) {
+        // Single port — auto-select
+        sales.push({
+          millLocation: cm.locId, millSlot: cm.slotIndex,
+          target: { type: 'port', location: locId, slotIndex: portsAtLoc[0].slotIndex }
+        });
+        this.actionParams._pickingTarget = false;
+        this.actionParams._currentMill = null;
+        this.updateActionPanel();
+      } else {
+        // Multiple ports — let player choose which one
+        this.actionParams._pickingPortSlot = { locId, ports: portsAtLoc };
+        this.updateActionPanel();
+      }
     });
 
     // External ports for distant market
@@ -908,6 +932,20 @@ const GameUI = {
       el.style.cursor = 'pointer';
       el.onclick = () => this.sellCottonToDistant();
     });
+  },
+
+  selectPortSlot(slotIndex) {
+    const pps = this.actionParams._pickingPortSlot;
+    const cm = this.actionParams._currentMill;
+    if (!pps || !cm) return;
+    this.actionParams.sales.push({
+      millLocation: cm.locId, millSlot: cm.slotIndex,
+      target: { type: 'port', location: pps.locId, slotIndex }
+    });
+    this.actionParams._pickingPortSlot = null;
+    this.actionParams._pickingTarget = false;
+    this.actionParams._currentMill = null;
+    this.updateActionPanel();
   },
 
   sellCottonPickAnother() {
