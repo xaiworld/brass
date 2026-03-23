@@ -94,6 +94,15 @@ const BoardRenderer = {
     this.render();
   },
 
+  setZoom(value) {
+    const svg = document.getElementById('game-board');
+    if (!svg) return;
+    document.getElementById('zoom-val').textContent = value;
+    const scale = value / 100;
+    svg.style.transform = 'scale(' + scale + ')';
+    svg.style.transformOrigin = 'top left';
+  },
+
   toggleHideNames(checked) {
     this.hideNames = checked;
     this.render();

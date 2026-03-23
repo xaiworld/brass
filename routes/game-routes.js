@@ -57,11 +57,10 @@ router.get('/api/games/:id/state', requireLoginAPI, (req, res) => {
   const gs = db.getGameState(gameId);
   if (!gs) return res.status(404).json({ error: 'Game not found' });
 
-  // Always check if a bot should play
-  const botModule = require('../lib/bot-engine');
-  botModule.checkAndPlayBot(gameId);
-
   if (gs.version === clientVersion) {
+    // Only trigger bot check if state hasn't changed (bot might need a nudge)
+    const botModule = require('../lib/bot-engine');
+    botModule.checkAndPlayBot(gameId);
     return res.status(304).end();
   }
 
