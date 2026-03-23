@@ -556,19 +556,23 @@ body.minimal-mode .money-disc.bronze { background: transparent; color: #CD7F32; 
   align-items: center;
   justify-content: center;
   gap: 8px;
+  cursor: pointer;
 }
 .log-toggle:hover { background: #1a1a1a; }
 .log-panel {
   height: 100px;
+  max-height: 50vh;
   padding: 4px 12px;
   overflow-y: auto;
   background: #111;
   transition: height 0.25s ease, padding 0.25s ease;
+  resize: vertical;
 }
 .log-wrapper.collapsed .log-panel {
   height: 0;
   padding: 0 12px;
   overflow: hidden;
+  resize: none;
 }
 .log-entry { font-size: 10px; color: var(--text-muted); padding: 1px 0; font-family: monospace; }
 .log-ts { color: #555; font-size: 8px; }
