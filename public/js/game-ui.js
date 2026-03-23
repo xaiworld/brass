@@ -810,77 +810,123 @@ const GameUI = {
 
   renderSellCottonFlow(panel) {
     if (!this.selectedCard) {
-      panel.innerHTML = `<h4>Sell Cotton</h4><p>Select a card to discard:</p>
-        <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>`;
+      panel.innerHTML = '<h4>Sell Cotton</h4><p>Select a card to discard:</p>' +
+        '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
       return;
     }
 
-    // Find unflipped mills
+    if (!this.actionParams.sales) this.actionParams.sales = [];
+    const sales = this.actionParams.sales;
+    const soldMillKeys = new Set(sales.map(s => s.millLocation + '_' + s.millSlot));
+    const soldPortKeys = new Set(sales.filter(s => s.target.type === 'port').map(s => s.target.location + '_' + s.target.slotIndex));
+
+    // Find remaining unflipped mills (exclude already sold in this action)
     const myPlayer = gameState.players.find(p => p.userId === USER_ID);
     const mills = [];
     for (const [locId, loc] of Object.entries(gameState.board.locations)) {
       for (let i = 0; i < loc.slots.length; i++) {
         const slot = loc.slots[i];
-        if (slot.owner === myPlayer.seat && slot.industryType === 'cottonMill' && !slot.flipped) {
+        if (slot.owner === myPlayer.seat && slot.industryType === 'cottonMill' && !slot.flipped && !soldMillKeys.has(locId + '_' + i)) {
           mills.push({ locId, slotIndex: i });
         }
       }
     }
 
-    if (mills.length === 0) {
-      panel.innerHTML = `<h4>Sell Cotton</h4><p>No unflipped cotton mills!</p>
-        <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>`;
+    // If we already have sales and are asking "sell more?"
+    if (sales.length > 0 && !this.actionParams._pickingMill && !this.actionParams._pickingTarget) {
+      const soldList = sales.map(s => (BOARD.locations[s.millLocation]?.name || s.millLocation)).join(', ');
+      let html = '<h4>Sell Cotton (' + sales.length + ' sold: ' + soldList + ')</h4>';
+      if (mills.length > 0 && gameState.distantMarketDemand > 0) {
+        html += '<p>Sell another mill?</p>';
+        html += '<button class="btn btn-primary" onclick="GameUI.sellCottonPickAnother()">Sell Another</button> ';
+      }
+      html += '<button class="btn btn-primary" onclick="GameUI.submitAction()">Done</button> ';
+      html += '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
+      panel.innerHTML = html;
       return;
     }
 
-    if (!this.actionParams.millLocation) {
+    if (mills.length === 0 && sales.length === 0) {
+      panel.innerHTML = '<h4>Sell Cotton</h4><p>No unflipped cotton mills!</p>' +
+        '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
+      return;
+    }
+    if (mills.length === 0 && sales.length > 0) {
+      // No more mills, auto-submit
+      this.submitAction();
+      return;
+    }
+
+    // Pick a mill
+    if (!this.actionParams._pickingTarget) {
+      this.actionParams._pickingMill = true;
       BoardRenderer.highlightLocations(mills.map(m => m.locId), (locId) => {
         const mill = mills.find(m => m.locId === locId);
-        this.actionParams.millLocation = locId;
-        this.actionParams.millSlot = mill.slotIndex;
+        this.actionParams._currentMill = { locId, slotIndex: mill.slotIndex };
+        this.actionParams._pickingMill = false;
+        this.actionParams._pickingTarget = true;
         this.updateActionPanel();
       });
-      panel.innerHTML = `<h4>Sell Cotton</h4><p>Click a cotton mill to sell from:</p>
-        <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>`;
+      const prefix = sales.length > 0 ? 'Sell Cotton — pick next mill:' : 'Sell Cotton — click a cotton mill:';
+      panel.innerHTML = '<h4>' + prefix + '</h4>' +
+        (sales.length > 0 ? '<button class="btn btn-primary" onclick="GameUI.submitAction()">Done (' + sales.length + ' sold)</button> ' : '') +
+        '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
       return;
     }
 
-    // Choose port or distant market
-    panel.innerHTML = `
-      <h4>Sell Cotton from ${BOARD.locations[this.actionParams.millLocation].name}</h4>
-      <p>Click an unflipped port or an external port (P) to sell:</p>
-      <button class="btn" onclick="GameUI.sellToDistant()">Distant Market (demand: ${gameState.distantMarketDemand})</button>
-      <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
-    `;
+    // Pick a target (port or distant)
+    const cm = this.actionParams._currentMill;
+    panel.innerHTML = '<h4>Sell from ' + (BOARD.locations[cm.locId]?.name || cm.locId) + '</h4>' +
+      '<p>Click an unflipped port or external port:</p>' +
+      '<button class="btn" onclick="GameUI.sellCottonToDistant()">Distant Market (demand: ' + gameState.distantMarketDemand + ')</button> ' +
+      '<button class="btn" onclick="GameUI.cancelAction()">Cancel</button>';
 
-    // Highlight unflipped player-built ports
+    // Highlight unflipped ports (exclude already used)
     const ports = [];
     for (const [locId, loc] of Object.entries(gameState.board.locations)) {
       for (let i = 0; i < loc.slots.length; i++) {
         const slot = loc.slots[i];
-        if (slot.industryType === 'port' && !slot.flipped && slot.owner !== null) {
+        if (slot.industryType === 'port' && !slot.flipped && slot.owner !== null && !soldPortKeys.has(locId + '_' + i)) {
           ports.push({ locId, slotIndex: i });
         }
       }
     }
     BoardRenderer.highlightLocations(ports.map(p => p.locId), (locId) => {
       const port = ports.find(p => p.locId === locId);
-      this.actionParams.sales = [{
-        millLocation: this.actionParams.millLocation,
-        millSlot: this.actionParams.millSlot,
+      sales.push({
+        millLocation: cm.locId, millSlot: cm.slotIndex,
         target: { type: 'port', location: locId, slotIndex: port.slotIndex }
-      }];
-      this.submitAction();
+      });
+      this.actionParams._pickingTarget = false;
+      this.actionParams._currentMill = null;
+      this.updateActionPanel();
     });
 
-    // Also make external ports clickable for distant market sell
+    // External ports for distant market
     document.querySelectorAll('.board-external-port').forEach(el => {
       el.classList.add('highlight');
       el.style.cursor = 'pointer';
-      el.onclick = () => {
-        this.sellToDistant();
-      };
+      el.onclick = () => this.sellCottonToDistant();
     });
+  },
+
+  sellCottonPickAnother() {
+    this.actionParams._pickingMill = false;
+    this.actionParams._pickingTarget = false;
+    this.actionParams._currentMill = null;
+    this.updateActionPanel();
+  },
+
+  sellCottonToDistant() {
+    const cm = this.actionParams._currentMill;
+    if (!cm) return;
+    this.actionParams.sales.push({
+      millLocation: cm.locId, millSlot: cm.slotIndex,
+      target: { type: 'distant' }
+    });
+    this.actionParams._pickingTarget = false;
+    this.actionParams._currentMill = null;
+    this.updateActionPanel();
   },
 
   renderWildBuildFlow(panel) {
@@ -1021,15 +1067,6 @@ const GameUI = {
     } catch (e) {
       alert('Network error');
     }
-  },
-
-  sellToDistant() {
-    this.actionParams.sales = [{
-      millLocation: this.actionParams.millLocation,
-      millSlot: this.actionParams.millSlot,
-      target: { type: 'distant' }
-    }];
-    this.submitAction();
   },
 
   selectIndustryType(type) {
