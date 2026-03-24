@@ -19,6 +19,8 @@ router.get('/lobby', requireLogin, (req, res) => {
 
   const myGames = allGames.filter(g => {
     if (g.status === 'finished') return false;
+    // xai sees all games
+    if (isAdmin) return true;
     return db.isGameMember(g.id, userId) || invitedGameIds.includes(g.id);
   }).map(g => {
     const players = db.getGamePlayers(g.id);
@@ -35,9 +37,14 @@ router.get('/lobby', requireLogin, (req, res) => {
     const isInvited = !isMember && invitedGameIds.includes(g.id);
     const invites = db.getInvitesForGame(g.id);
     const invitedNames = invites.map(i => { const u = db.findUserById(i.user_id); return u ? u.username : '?'; });
+    const playerNames = players.map(p => {
+      const u = db.findUserById(p.user_id);
+      return { name: u ? u.username : '?', isBot: p.is_bot, color: p.color };
+    });
     return {
       ...g,
       player_count: players.length,
+      player_names: playerNames,
       is_member: isMember,
       is_invited: isInvited,
       is_creator: g.created_by === userId,

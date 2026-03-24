@@ -74,10 +74,14 @@
                 <div class="game-info">
                   <strong><%= game.name %></strong>
                   <span class="badge badge-<%= game.status %>"><%= game.status %></span>
-                  <span class="muted"><%= game.player_count %>/<%= game.num_players %> players</span>
-                  <span class="muted">by <%= game.creator_name %></span>
+                  <span class="muted"><%= game.player_count %>/<%= game.num_players %></span>
                   <% if (game.gameAppVersion) { %>
                     <span class="badge badge-version<%= game.compatible ? '' : ' badge-incompatible' %>">v<%= game.gameAppVersion %></span>
+                  <% } %>
+                </div>
+                <div style="font-size:10px;margin-top:2px;display:flex;gap:6px;flex-wrap:wrap">
+                  <% for (const p of game.player_names) { %>
+                    <span style="color:<%= p.isBot ? 'var(--text-muted)' : '#fff' %>"><%= p.name %><%= p.isBot ? ' (Bot)' : '' %></span>
                   <% } %>
                 </div>
                 <div class="game-actions">
