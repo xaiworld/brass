@@ -358,7 +358,8 @@ const GameUI = {
       html += '</div>';
     }
     popup.innerHTML = html;
-    const rect = event.target.closest('.vp-hover-trigger').getBoundingClientRect();
+    const el = event.target.closest('.vp-hover-trigger') || event.target;
+    const rect = el.getBoundingClientRect();
     popup.style.left = (rect.right + 8) + 'px';
     popup.style.top = rect.top + 'px';
     popup.style.display = 'block';
