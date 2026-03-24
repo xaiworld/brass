@@ -828,6 +828,16 @@ const GameUI = {
       this.actionParams.secondLinkId = linkId;
       this.updateActionPanel();
     });
+
+    // Update panel to instruct user
+    const panel = document.getElementById('action-panel');
+    if (panel) {
+      panel.innerHTML = `
+        <h4>Click a second rail link on the board</h4>
+        <button class="btn btn-primary" onclick="GameUI.confirmSingleRail()">Never mind, just 1 rail</button>
+        <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
+      `;
+    }
   },
 
   renderSellCottonFlow(panel) {
