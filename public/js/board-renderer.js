@@ -225,6 +225,19 @@ const BoardRenderer = {
         this.drawLinkLine(from.x, from.y, to.x, to.y, color, width, dash, link.id);
       }
     }
+
+    // Draw preview links (pending rail builds)
+    if (typeof GameUI !== 'undefined' && GameUI.previewLinks) {
+      for (const pl of GameUI.previewLinks) {
+        const plData = BOARD.links.find(l => l.id === pl.linkId);
+        if (!plData) continue;
+        const pfrom = BOARD.locations[plData.from] || BOARD.nonBuildable[plData.from];
+        const pto = BOARD.locations[plData.to] || BOARD.nonBuildable[plData.to];
+        if (!pfrom || !pto) continue;
+        const pcolor = BOARD.playerColors[pl.seat];
+        this.drawLinkLine(pfrom.x, pfrom.y, pto.x, pto.y, pcolor, 5, '4,3', plData.id);
+      }
+    }
   },
 
   drawLinkLine(x1, y1, x2, y2, color, width, dash, linkId) {

@@ -535,7 +535,24 @@ const GameUI = {
     this.updateHand();
   },
 
+  previewLinks: [], // [{linkId, seat}] — visual preview of links being built
+  previewLogEntries: [], // temporary log entries shown during action
+
+  clearPreviews(cancelled) {
+    if (cancelled && this.previewLinks.length > 0) {
+      this.previewLogEntries.push({ msg: '  ✗ Action cancelled', ts: new Date().toISOString() });
+    }
+    this.previewLinks = [];
+    // Clear preview entries after a short time (so cancelled ones show briefly)
+    if (!cancelled) {
+      this.previewLogEntries = [];
+    } else {
+      setTimeout(() => { this.previewLogEntries = []; this.updateLog(); }, 5000);
+    }
+  },
+
   cancelAction() {
+    this.clearPreviews(true);
     this.selectedAction = null;
     this.selectedCard = null;
     this.actionStep = 0;
@@ -781,11 +798,22 @@ const GameUI = {
     if (gameState.era === 'rail' && this.actionParams.secondLinkId) {
       const l1 = gameState.board.links[this.actionParams.linkId];
       const l2 = gameState.board.links[this.actionParams.secondLinkId];
-      const name = (l) => (BOARD.locations[l?.from]?.name || BOARD.nonBuildable[l?.from]?.name || '?') + '—' + (BOARD.locations[l?.to]?.name || BOARD.nonBuildable[l?.to]?.name || '?');
+      const lname = (l) => (BOARD.locations[l?.from]?.name || BOARD.nonBuildable[l?.from]?.name || '?') + '—' + (BOARD.locations[l?.to]?.name || BOARD.nonBuildable[l?.to]?.name || '?');
+
+      // Show both previews
+      const myPlayer = gameState.players.find(p => p.userId === USER_ID);
+      if (myPlayer) {
+        this.previewLinks = [
+          { linkId: this.actionParams.linkId, seat: myPlayer.seat },
+          { linkId: this.actionParams.secondLinkId, seat: myPlayer.seat }
+        ];
+        BoardRenderer.render();
+      }
+
       panel.innerHTML = `
         <h4>Build 2 Rails (£15 + 2 coal)</h4>
-        <p>1: ${name(l1)}</p>
-        <p>2: ${name(l2)}</p>
+        <p>1: ${lname(l1)} ✓</p>
+        <p>2: ${lname(l2)} ✓</p>
         <button class="btn btn-primary" onclick="GameUI.submitAction()">Build Both</button>
         <button class="btn" onclick="GameUI.cancelAction()">Cancel</button>
       `;
@@ -797,8 +825,17 @@ const GameUI = {
       const linkState = gameState.board.links[this.actionParams.linkId];
       const fromName = BOARD.locations[linkState?.from]?.name || BOARD.nonBuildable[linkState?.from]?.name || '?';
       const toName = BOARD.locations[linkState?.to]?.name || BOARD.nonBuildable[linkState?.to]?.name || '?';
+
+      // Show preview of first rail on board
+      const myPlayer = gameState.players.find(p => p.userId === USER_ID);
+      if (myPlayer && !this.previewLinks.some(pl => pl.linkId === this.actionParams.linkId)) {
+        this.previewLinks = [{ linkId: this.actionParams.linkId, seat: myPlayer.seat }];
+        this.previewLogEntries.push({ msg: '  ▸ Rail preview: ' + fromName + '—' + toName + ' (£5 + 1 coal)', ts: new Date().toISOString(), preview: true });
+        BoardRenderer.render();
+      }
+
       panel.innerHTML = `
-        <h4>Rail: ${fromName} — ${toName}</h4>
+        <h4>Rail: ${fromName} — ${toName} ✓</h4>
         <p>Add a second rail? (2 rails = £15 + 2 coal instead of £5 + 1 coal)</p>
         <button class="btn" onclick="GameUI.startSecondLink()">Add Second Rail</button>
         <button class="btn btn-primary" onclick="GameUI.confirmSingleRail()">Done (1 rail, £5 + 1 coal)</button>
@@ -1132,7 +1169,12 @@ const GameUI = {
       }
       gameState = data.state;
       stateVersion = data.version;
-      this.cancelAction();
+      this.clearPreviews(false);
+      this.selectedAction = null;
+      this.selectedCard = null;
+      this.actionStep = 0;
+      this.actionParams = {};
+      BoardRenderer.clearHighlights();
       this.updateAll();
     } catch (e) {
       alert('Network error');
@@ -1173,7 +1215,12 @@ const GameUI = {
 
       gameState = data.state;
       stateVersion = data.version;
-      this.cancelAction();
+      this.clearPreviews(false);
+      this.selectedAction = null;
+      this.selectedCard = null;
+      this.actionStep = 0;
+      this.actionParams = {};
+      BoardRenderer.clearHighlights();
       this.updateAll();
     } catch (e) {
       alert('Network error');
@@ -1595,7 +1642,7 @@ const GameUI = {
   updateLog() {
     const panel = document.getElementById('log-panel');
     const filtersEl = document.getElementById('log-filters');
-    const logs = gameState.log || [];
+    const logs = [...(gameState.log || []), ...this.previewLogEntries];
 
     // Build filter buttons
     if (filtersEl) {
