@@ -34,10 +34,10 @@ const INDUSTRIES = {
     name: 'Port', icon: 'P', color: '#2196F3',
     flipCondition: 'Used to sell cotton',
     levels: {
-      1: { cost: 6, coal: 0, iron: 0, income: 3, vp: 2, tiles: 1, era: 'canal' },
-      2: { cost: 7, coal: 0, iron: 0, income: 3, vp: 4, tiles: 1, era: 'both' },
-      3: { cost: 8, coal: 0, iron: 0, income: 4, vp: 6, tiles: 1, era: 'both' },
-      4: { cost: 9, coal: 0, iron: 0, income: 4, vp: 9, tiles: 1, era: 'both' }
+      1: { cost: 6, coal: 0, iron: 0, income: 3, vp: 2, tiles: 2, era: 'canal' },
+      2: { cost: 7, coal: 0, iron: 0, income: 3, vp: 4, tiles: 2, era: 'both' },
+      3: { cost: 8, coal: 0, iron: 0, income: 4, vp: 6, tiles: 2, era: 'both' },
+      4: { cost: 9, coal: 0, iron: 0, income: 4, vp: 9, tiles: 2, era: 'both' }
     }
   },
   shipyard: {
