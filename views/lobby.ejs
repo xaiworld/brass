@@ -133,6 +133,16 @@
           <div class="info-row">Players: <%= totalPlayers %></div>
         </div>
 
+        <div class="panel-section" style="margin-bottom:12px">
+          <h4 style="color:var(--gold);margin-bottom:8px">Players</h4>
+          <% for (const u of userList) { %>
+            <div class="info-row" style="display:flex;justify-content:space-between;align-items:center">
+              <span<%= u === user.username ? ' style="font-weight:bold"' : '' %>><%= u %></span>
+              <a href="/profile/<%= u %>" class="muted" style="font-size:9px">stats</a>
+            </div>
+          <% } %>
+        </div>
+
         <% if (isAdmin) { %>
         <div class="panel-section">
           <h4 style="color:var(--gold);margin-bottom:8px">Admin: Create User</h4>

@@ -57,7 +57,8 @@ router.get('/lobby', requireLogin, (req, res) => {
   const trainingStats = db.getTrainingStats();
   const trainingStatus = getTrainingStatus();
 
-  res.render('lobby', { games: myGames, appVersion: APP_VERSION, totalGames, totalPlayers, isAdmin, trainingStats, trainingStatus });
+  const userList = allUsers.map(u => u.username).sort();
+  res.render('lobby', { games: myGames, appVersion: APP_VERSION, totalGames, totalPlayers, isAdmin, trainingStats, trainingStatus, userList });
 });
 
 router.post('/games/create', requireLogin, (req, res) => {
