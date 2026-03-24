@@ -18,9 +18,9 @@ router.get('/lobby', requireLogin, (req, res) => {
   const invitedGameIds = myInvites.map(i => i.game_id);
 
   const myGames = allGames.filter(g => {
-    if (g.status === 'finished') return false;
-    // xai sees all games
+    // xai sees ALL games including finished
     if (isAdmin) return true;
+    if (g.status === 'finished') return false;
     return db.isGameMember(g.id, userId) || invitedGameIds.includes(g.id);
   }).map(g => {
     const players = db.getGamePlayers(g.id);

@@ -105,6 +105,12 @@
                     <% } %>
                   <% } else if (game.status === 'waiting') { %>
                     <span class="muted">Waiting...</span>
+                  <% } else if (game.status === 'finished') { %>
+                    <a href="/games/<%= game.id %>" class="btn btn-sm">Review</a>
+                    <span class="badge badge-finished">finished</span>
+                  <% } %>
+                  <% if (isAdmin && !game.is_member && (game.status === 'active' || game.status === 'finished')) { %>
+                    <a href="/games/<%= game.id %>" class="btn btn-sm">Observe</a>
                   <% } %>
                 </div>
                 <% if (game.status === 'waiting' && game.is_creator) { %>
