@@ -53,8 +53,9 @@ const BoardRenderer = {
     this.svg.innerHTML = '';
 
     // Board map background
+    const mapSrc = (typeof gameState !== 'undefined' && gameState.numPlayers === 2) ? '/img/board-map-2p.jpg' : '/img/board-map.jpg';
     this.mapImage = this.createSVG('image', {
-      href: '/img/board-map.jpg',
+      href: mapSrc,
       x: 0, y: 0,
       width: 600, height: 520,
       preserveAspectRatio: 'xMidYMid meet',
@@ -197,7 +198,9 @@ const BoardRenderer = {
       if (!from || !to) continue;
 
       const linkState = state.board.links[link.id];
-      const isAvailable = era === 'canal' ? link.canal : link.rail;
+      // Skip links not in game state (e.g. 2-player removed links)
+      if (!linkState) continue;
+      const isAvailable = era === 'canal' ? linkState.canal : linkState.rail;
 
       let color = '#44553322';
       let width = 2;
@@ -254,7 +257,11 @@ const BoardRenderer = {
   },
 
   drawNonBuildable() {
+    const state = gameState;
     for (const [id, wp] of Object.entries(BOARD.nonBuildable)) {
+      // Skip non-buildable locations not connected by any link in game state
+      const hasLink = Object.values(state.board.links).some(l => l.from === id || l.to === id || l.through === id);
+      if (!hasLink) continue;
       const isEP = wp.isExternalPort;
 
       if (isEP) {
@@ -333,7 +340,8 @@ const BoardRenderer = {
 
   drawMarketPanels() {
     const state = gameState;
-    const slotPrices = [1, 1, 2, 2, 3, 3, 4, 4];
+    const is2P = state.numPlayers === 2;
+    const slotPrices = is2P ? [2, 2, 3, 3, 4, 4] : [1, 1, 2, 2, 3, 3, 4, 4];
 
     // Right side: turn order, money spent, demand
     this.drawTurnOrderPanel(state);
@@ -427,9 +435,10 @@ const BoardRenderer = {
   drawResourcePanel(panelId, label, cubes, cubeColor, textColor, slotPrices) {
     const pos = this.getMarketPos(panelId);
     this.beginScaledGroup(panelId, pos.x, pos.y);
+    const numSlots = slotPrices.length;
     const slotSize = 11, gap = 2;
     const panelW = 24;
-    const panelH = 8 * (slotSize + gap) + 16;
+    const panelH = numSlots * (slotSize + gap) + 16;
     this.createPanelBg(panelId, pos.x - panelW/2, pos.y - 6, panelW, panelH);
 
     // Label
@@ -439,15 +448,12 @@ const BoardRenderer = {
       'font-weight': 'bold', 'pointer-events': 'none'
     }).textContent = label;
 
-    // Slots vertical: top=cheapest £1, bottom=most expensive £4
+    // Slots vertical: top=cheapest, bottom=most expensive
     const startY = pos.y + 8;
-    for (let i = 0; i < 8; i++) {
-      const slotIdx = i; // top = slot 0 (cheapest £1), bottom = slot 7 (expensive £4)
+    for (let i = 0; i < numSlots; i++) {
+      const slotIdx = i;
       const sy = startY + i * (slotSize + gap);
-      // Cubes fill from bottom (expensive) up. Top empties first when buying.
-      // Slot i is filled if: (MARKET_SLOTS - cubes) <= slotIdx is false
-      // i.e., the top (8 - cubes) slots are empty
-      const filled = i >= (8 - cubes);
+      const filled = i >= (numSlots - cubes);
       const price = slotPrices[slotIdx];
 
       this.createAndAppend('rect', {

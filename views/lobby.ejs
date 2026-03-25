@@ -26,12 +26,16 @@
 
         <div class="lobby-quick">
           <form method="POST" action="/games/quick" style="display:inline">
+            <input type="hidden" name="numBots" value="1">
+            <button type="submit" class="btn btn-primary">Quick 2P (1 bot)</button>
+          </form>
+          <form method="POST" action="/games/quick" style="display:inline">
             <input type="hidden" name="numBots" value="2">
-            <button type="submit" class="btn btn-primary">Quick Game (2 bots)</button>
+            <button type="submit" class="btn btn-primary">Quick 3P (2 bots)</button>
           </form>
           <form method="POST" action="/games/quick" style="display:inline">
             <input type="hidden" name="numBots" value="3">
-            <button type="submit" class="btn btn-primary">Quick Game (3 bots)</button>
+            <button type="submit" class="btn btn-primary">Quick 4P (3 bots)</button>
           </form>
         </div>
 
@@ -46,6 +50,7 @@
               <div class="form-group">
                 <label>Players</label>
                 <select name="numPlayers">
+                  <option value="2">2 Players</option>
                   <option value="3">3 Players</option>
                   <option value="4" selected>4 Players</option>
                 </select>

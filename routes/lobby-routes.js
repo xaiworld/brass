@@ -71,7 +71,7 @@ router.get('/lobby', requireLogin, (req, res) => {
 router.post('/games/create', requireLogin, (req, res) => {
   const userId = req.session.user.id;
   const { name, numPlayers, numBots } = req.body;
-  const np = Math.min(4, Math.max(3, parseInt(numPlayers) || 4));
+  const np = Math.min(4, Math.max(2, parseInt(numPlayers) || 4));
   const nb = Math.min(np - 1, Math.max(0, parseInt(numBots) || 0));
 
   const game = db.createGame(name || 'New Game', np, userId);
@@ -96,7 +96,7 @@ router.post('/games/create', requireLogin, (req, res) => {
 router.post('/games/quick', requireLogin, (req, res) => {
   const userId = req.session.user.id;
   const nb = Math.min(3, Math.max(1, parseInt(req.body.numBots) || 2));
-  const np = nb + 1;
+  const np = Math.max(2, nb + 1);
   const names = ['Lancashire', 'Birmingham', 'Industrial', 'Revolution', 'Canal', 'Railway', 'Empire', 'Trade'];
   const name = names[Math.floor(Math.random() * names.length)] + ' ' + Math.floor(Math.random() * 1000);
 
@@ -234,7 +234,7 @@ router.post('/games/:id/start', requireLogin, (req, res) => {
   }
 
   const dbPlayers = db.getGamePlayers(gameId);
-  if (dbPlayers.length < 3) return res.redirect('/lobby');
+  if (dbPlayers.length < 2) return res.redirect('/lobby');
 
   const players = dbPlayers.map(p => {
     const user = db.findUserById(p.user_id);
