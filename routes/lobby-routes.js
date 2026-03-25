@@ -12,6 +12,7 @@ router.get('/lobby', requireLogin, (req, res) => {
 
   const allGames = db.findGames({});
   const allUsers = db.get().users.filter(u => !u.is_bot);
+  const isAdmin = req.session.user.username === 'xai';
 
   // Show games where user is a member OR invited
   const myInvites = db.getInvitesForUser(userId);
@@ -58,7 +59,6 @@ router.get('/lobby', requireLogin, (req, res) => {
   // System stats
   const totalGames = allGames.length;
   const totalPlayers = allUsers.length;
-  const isAdmin = req.session.user.username === 'xai';
 
   // Training stats
   const trainingStats = db.getTrainingStats();
