@@ -20,7 +20,7 @@
     </div>
   </nav>
   <main class="container">
-    <div style="display:flex;gap:24px;align-items:flex-start">
+    <div class="lobby-layout">
       <div style="flex:1">
         <h2>My Games</h2>
 
@@ -146,7 +146,7 @@
       </div>
 
       <!-- Sidebar -->
-      <div style="width:200px;flex-shrink:0">
+      <div class="lobby-sidebar">
         <div class="panel-section" style="margin-bottom:12px">
           <h4 style="color:var(--gold);margin-bottom:8px">System</h4>
           <div class="info-row">Total games: <%= totalGames %></div>
@@ -221,5 +221,11 @@
 
     <p class="muted" style="margin-top: 24px; text-align: center">Brass: Lancashire v<%= appVersion %></p>
   </main>
+  <script>
+    if (/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || (window.innerWidth <= 768 && 'ontouchstart' in window)) {
+      document.body.classList.add('is-mobile');
+    }
+  </script>
 </body>
 </html>

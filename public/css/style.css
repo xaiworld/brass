@@ -90,6 +90,8 @@ a:hover { text-decoration: underline; }
   margin-bottom: 24px;
 }
 .lobby-create h3 { margin-bottom: 12px; color: var(--gold); font-size: 16px; }
+.lobby-sidebar { width: 200px; flex-shrink: 0; }
+.lobby-layout { display: flex; gap: 24px; align-items: flex-start; }
 .create-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
 .create-form .form-group { min-width: 120px; }
 .lobby-games h3 { margin-bottom: 12px; color: var(--gold); }
@@ -637,3 +639,198 @@ body.minimal-mode .money-disc.bronze { background: transparent; color: #CD7F32; 
 .history-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
 .history-players { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-muted); }
 .history-player.winner { color: var(--gold); font-weight: bold; }
+
+/* ============ MOBILE STYLES ============ */
+/* Applied when body has .is-mobile class (set by JS detection)
+   Also a @media fallback for narrow touch screens */
+@media (max-width: 768px) and (hover: none) {
+  body { font-size: 14px; }
+  .lobby-layout { flex-direction: column !important; gap: 16px !important; }
+  .lobby-sidebar { width: 100% !important; }
+  .lobby-quick { flex-wrap: wrap; }
+  .create-form { flex-direction: column; }
+  .create-form .form-group { min-width: auto !important; width: 100%; }
+  .form-row { flex-direction: column; gap: 8px; }
+}
+
+body.is-mobile .navbar {
+  padding: 6px 12px;
+}
+body.is-mobile .nav-brand { font-size: 14px; }
+body.is-mobile .nav-links { gap: 8px; }
+body.is-mobile .nav-link, body.is-mobile .nav-user { font-size: 12px; }
+body.is-mobile .nav-links .badge { display: none; }
+
+/* Game layout: stack vertically on mobile */
+body.is-mobile .game-container { height: auto; min-height: calc(100vh - 40px); }
+body.is-mobile .game-main { flex-direction: column; overflow: visible; }
+
+/* Hide left/right panels by default on mobile — use tabs instead */
+body.is-mobile .left-panel,
+body.is-mobile .right-panel { display: none; }
+
+/* Mobile tab bar at bottom */
+.mobile-tabs {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg-light);
+  border-top: 1px solid #444;
+  z-index: 50;
+  padding: 0;
+}
+body.is-mobile .mobile-tabs { display: flex; }
+.mobile-tab {
+  flex: 1;
+  padding: 10px 4px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.mobile-tab.active { color: var(--gold); background: var(--surface); }
+.mobile-tab-icon { font-size: 16px; }
+
+/* Mobile panels: full-screen overlays */
+.mobile-panel-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 48px;
+  background: var(--bg);
+  z-index: 45;
+  overflow-y: auto;
+  padding: 12px;
+}
+.mobile-panel-overlay.active { display: block; }
+.mobile-panel-overlay .panel-section { margin-bottom: 10px; }
+.mobile-panel-close {
+  position: sticky; top: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; margin-bottom: 8px;
+  background: var(--bg);
+  z-index: 1;
+}
+.mobile-panel-close h3 { color: var(--gold); font-size: 16px; margin: 0; }
+.mobile-panel-close button { font-size: 20px; }
+
+/* Board: full width on mobile */
+body.is-mobile .board-container {
+  flex: none;
+  width: 100%;
+  height: calc(100vh - 88px); /* navbar + tab bar */
+  padding: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+body.is-mobile #game-board {
+  min-width: 600px; /* allow horizontal scroll for detail */
+}
+
+/* Board controls: compact on mobile */
+body.is-mobile .board-controls {
+  font-size: 9px;
+  padding: 3px 6px;
+  max-width: 50%;
+}
+body.is-mobile .board-controls .controls-row:nth-child(2) { display: none; }
+body.is-mobile .board-controls input[type="range"] { width: 40px; }
+
+/* Floating hand: bottom dock on mobile */
+body.is-mobile .floating-hand {
+  bottom: 52px; /* above tab bar */
+  left: 0;
+  right: 0;
+  transform: none;
+  width: 100%;
+  max-width: 100vw;
+  border-radius: 8px 8px 0 0;
+  height: 95px;
+  min-width: auto;
+  resize: none;
+}
+body.is-mobile .floating-hand-cards .card { min-width: 36px; }
+
+/* Log: above tab bar */
+body.is-mobile .log-wrapper {
+  position: fixed; bottom: 48px; left: 0; right: 0;
+  z-index: 35;
+}
+body.is-mobile .log-panel { max-height: 40vh; }
+
+/* Touch-friendly sizes */
+body.is-mobile .btn { padding: 8px 16px; font-size: 14px; }
+body.is-mobile .btn-sm { padding: 6px 12px; font-size: 12px; }
+body.is-mobile .action-btn { font-size: 13px; padding: 8px 14px; }
+body.is-mobile .nav-btn { min-width: 36px; padding: 6px 10px !important; font-size: 14px !important; }
+body.is-mobile .popup-action { padding: 8px 12px; font-size: 13px; }
+
+/* Larger fonts on mobile */
+body.is-mobile .player-name { font-size: 13px; }
+body.is-mobile .player-stats-grid { font-size: 11px; }
+body.is-mobile .money-disc { width: 20px; height: 20px; font-size: 9px; }
+body.is-mobile .legend-row { font-size: 11px; padding: 3px 0; }
+body.is-mobile .legend-swatch { width: 14px; height: 14px; }
+body.is-mobile .info-row { font-size: 13px; }
+body.is-mobile .log-entry { font-size: 12px; }
+body.is-mobile .log-ts { font-size: 10px; }
+body.is-mobile .mat-name { font-size: 12px; }
+body.is-mobile .mat-tile { font-size: 11px; padding: 2px 6px; }
+body.is-mobile .mat-tile-box { width: 28px; font-size: 10px; }
+body.is-mobile .tile-num { font-size: 11px; }
+body.is-mobile .tile-vp-hex { width: 18px; height: 17px; font-size: 9px; }
+body.is-mobile .tile-inc-circle { width: 18px; height: 18px; font-size: 8px; }
+body.is-mobile .market-row { font-size: 12px; }
+body.is-mobile .card-label { font-size: 11px; }
+body.is-mobile .card-type { font-size: 10px; }
+
+/* Action popup: full-width bottom sheet on mobile */
+body.is-mobile .action-popup {
+  position: fixed;
+  bottom: 52px; left: 0; right: 0;
+  top: auto;
+  border-radius: 12px 12px 0 0;
+  min-width: auto;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+body.is-mobile .popup-title { font-size: 14px; }
+body.is-mobile .popup-muted { font-size: 12px; }
+
+/* VP breakdown: centered on mobile */
+body.is-mobile .vp-breakdown-popup {
+  left: 10% !important; right: 10% !important;
+  top: 20% !important;
+  max-width: 80vw;
+  font-size: 12px;
+}
+
+/* Bot overlay: mobile-friendly */
+body.is-mobile .bot-overlay { max-width: 90vw; font-size: 14px; }
+
+/* Lobby: stack sidebar on mobile */
+body.is-mobile .container { padding: 12px; }
+body.is-mobile .lobby-quick { flex-wrap: wrap; }
+body.is-mobile .lobby-quick .btn { flex: 1; min-width: 80px; text-align: center; }
+body.is-mobile .create-form { flex-direction: column; }
+body.is-mobile .create-form .form-group { min-width: auto; width: 100%; }
+body.is-mobile .form-row { flex-direction: column; gap: 8px; }
+body.is-mobile .game-card { padding: 10px 12px; }
+body.is-mobile .game-card .game-info { gap: 8px; }
+body.is-mobile .game-delete-btn { padding: 12px 8px; font-size: 20px; opacity: 0.8; }
+
+/* Lobby: stack on mobile */
+body.is-mobile .lobby-layout { flex-direction: column; gap: 16px; }
+body.is-mobile .lobby-sidebar { width: 100%; flex-shrink: 1; }
+
+/* Wiki: mobile */
+body.is-mobile .wiki-container { padding: 12px; }
+body.is-mobile .wiki-table th, body.is-mobile .wiki-table td { padding: 4px 6px; font-size: 12px; }
+
+/* Profile: mobile */
+body.is-mobile .stats-grid { grid-template-columns: repeat(2, 1fr); }
