@@ -70,13 +70,25 @@ const BOARD = {
     { id: 'macclesfield-theMidlands', from: 'macclesfield', to: 'theMidlands', canal: true, rail: true, segments: 2 }
   ],
 
-  playerColors: ['#e74c3c', '#9b59b6', '#2ecc71', '#f39c12'],
+  playerColors: ['#e74c3c', '#9b59b6', '#27a35c', '#f39c12'],
   industryIcons: {
     cottonMill: 'M',
     coalMine: 'C',
     ironWorks: 'I',
     port: 'P',
     shipyard: 'S'
+  },
+  industryImages: {
+    cottonMill: '/img/cotton.jpg',
+    coalMine: '/img/coal.jpg',
+    ironWorks: '/img/iron.jpg',
+    port: '/img/port.jpg',
+    shipyard: '/img/shipyard.jpg'
+  },
+  // For dual-type slots (maps sorted allowed types to a combined image)
+  industryDualImages: {
+    'coalMine+cottonMill': '/img/cotton_and_coal.jpg',
+    'cottonMill+port': '/img/cotton_and_port.jpg'
   },
   industryColors: {
     cottonMill: '#f8f8f8',

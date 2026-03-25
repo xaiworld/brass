@@ -834,11 +834,12 @@ const BoardRenderer = {
 
   drawSlot(locId, slot, index, cx, cy, size) {
     const half = size / 2;
+    const useImages = !this.hideIcons && BOARD.industryImages;
 
     if (slot.owner !== null) {
-      // Filled slot
+      // Filled slot — player color background
       const pColor = BOARD.playerColors[slot.owner];
-      const fillColor = slot.flipped ? (pColor + '88') : pColor; // dimmed if flipped
+      const fillColor = slot.flipped ? (pColor + '88') : pColor;
 
       this.createAndAppend('rect', {
         x: cx - half, y: cy - half,
@@ -846,24 +847,74 @@ const BoardRenderer = {
         rx: 2,
         fill: fillColor,
         stroke: slot.flipped ? (pColor + '66') : pColor,
-        'stroke-width': slot.flipped ? 1 : 1,
+        'stroke-width': 1,
         'data-location': locId, 'data-slot': index,
         class: 'board-slot filled'
       });
 
-      // Industry color stripe on top
-      const stripeColors = {
-        cottonMill: '#f5f0ea88', coalMine: '#55555588', ironWorks: '#d4740e77',
-        port: '#2196F377', shipyard: '#6d432a77'
-      };
-      this.createAndAppend('rect', {
-        x: cx - half, y: cy - half,
-        width: size, height: 1.8, rx: 1,
-        fill: stripeColors[slot.industryType] || '#88888866',
-        'pointer-events': 'none'
-      });
+      // Industry image on top of player color (with player color showing through)
+      if (useImages) {
+        const imgSrc = BOARD.industryImages[slot.industryType];
+        if (imgSrc) {
+          // Clip to rounded rect using clipPath
+          const clipId = 'clip-' + locId + '-' + index;
+          const defs = this._ensureDefs();
+          const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+          clipPath.setAttribute('id', clipId);
+          const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          clipRect.setAttribute('x', cx - half);
+          clipRect.setAttribute('y', cy - half);
+          clipRect.setAttribute('width', size);
+          clipRect.setAttribute('height', size);
+          clipRect.setAttribute('rx', 2);
+          clipPath.appendChild(clipRect);
+          defs.appendChild(clipPath);
 
-      // Flipped: tight hexagon outline ON TOP
+          this.createAndAppend('image', {
+            href: imgSrc,
+            x: cx - half, y: cy - half,
+            width: size, height: size,
+            preserveAspectRatio: 'xMidYMid slice',
+            opacity: slot.flipped ? 0.5 : 0.6,
+            'clip-path': 'url(#' + clipId + ')',
+            'pointer-events': 'none'
+          });
+        }
+
+        // Level number — center-right, player color with thin dark border
+        const pColorText = BOARD.playerColors[slot.owner];
+        this.createAndAppend('text', {
+          x: cx + half - 3, y: cy,
+          'text-anchor': 'middle', 'dominant-baseline': 'central',
+          'font-size': '7', 'font-weight': 'bold', fill: pColorText,
+          stroke: '#000', 'stroke-width': 0.3,
+          'pointer-events': 'none'
+        }).textContent = slot.level;
+      } else {
+        // Letters fallback
+        this.createAndAppend('text', {
+          x: cx, y: cy + 3,
+          'text-anchor': 'middle', 'font-size': '7', 'font-weight': 'bold',
+          fill: '#333',
+          'pointer-events': 'none'
+        }).textContent = BOARD.industryIcons[slot.industryType] + slot.level;
+      }
+
+      // Industry color stripe on top (only when images not shown)
+      if (!useImages) {
+        const stripeColors = {
+          cottonMill: '#f5f0ea88', coalMine: '#55555588', ironWorks: '#d4740e77',
+          port: '#2196F377', shipyard: '#6d432a77'
+        };
+        this.createAndAppend('rect', {
+          x: cx - half, y: cy - half,
+          width: size, height: 1.8, rx: 1,
+          fill: stripeColors[slot.industryType] || '#88888866',
+          'pointer-events': 'none'
+        });
+      }
+
+      // Flipped: tight hexagon outline in player color ON TOP
       if (slot.flipped) {
         const hr = half + 1.5;
         const hexPts = [0,1,2,3,4,5].map(n => {
@@ -872,17 +923,8 @@ const BoardRenderer = {
         }).join(' ');
         this.createAndAppend('polygon', {
           points: hexPts,
-          fill: 'none', stroke: '#cc3366cc', 'stroke-width': 1.2
+          fill: 'none', stroke: pColor + 'cc', 'stroke-width': 1.2
         });
-      }
-
-      if (!this.hideIcons) {
-        this.createAndAppend('text', {
-          x: cx, y: cy + 3,
-          'text-anchor': 'middle', 'font-size': '7', 'font-weight': 'bold',
-          fill: '#333',
-          'pointer-events': 'none'
-        }).textContent = BOARD.industryIcons[slot.industryType] + slot.level;
       }
 
       // Resource cubes
@@ -897,88 +939,175 @@ const BoardRenderer = {
         }
       }
     } else {
-      // Empty slot — colored by allowed industry type(s)
+      // Empty slot — show dimmed industry icon image or colored background
       const allowed = slot.allowed;
       const isDual = allowed.length > 1;
-      const dimColors = {
-        cottonMill: '#f5f0ea55', // dim white cotton - more contrast
-        coalMine:   '#33333366', // dim dark grey
-        ironWorks:  '#d4740e44', // dim orange
-        port:       '#2196F344', // dim blue
-        shipyard:   '#6d432a44'  // dim brown
-      };
 
-      if (isDual) {
-        // Diagonal split: top-left triangle = first type, bottom-right = second type
-        const x1 = cx - half, y1 = cy - half;
-        const x2 = cx + half, y2 = cy + half;
-        // Clip paths via polygons
-        this.createAndAppend('polygon', {
-          points: x1+','+y1 + ' ' + x2+','+y1 + ' ' + x1+','+y2,
-          fill: dimColors[allowed[0]] || '#ffffff22'
-        });
-        this.createAndAppend('polygon', {
-          points: x2+','+y1 + ' ' + x2+','+y2 + ' ' + x1+','+y2,
-          fill: dimColors[allowed[1]] || '#ffffff22'
-        });
-        // Border
+      if (useImages) {
+        // Background rect for the slot
         this.createAndAppend('rect', {
           x: cx - half, y: cy - half, width: size, height: size, rx: 2,
-          fill: 'none', stroke: '#8b735566', 'stroke-width': 0.8,
-          'data-location': locId, 'data-slot': index, class: 'board-slot empty'
-        });
-        // Diagonal line
-        this.createAndAppend('line', {
-          x1: x2, y1: y1, x2: x1, y2: y2,
-          stroke: '#8b735566', 'stroke-width': 0.5
-        });
-      } else {
-        this.createAndAppend('rect', {
-          x: cx - half, y: cy - half, width: size, height: size, rx: 2,
-          fill: dimColors[allowed[0]] || '#ffffff18',
+          fill: '#d6c8a8',
           stroke: '#8b735566', 'stroke-width': 0.8,
           'data-location': locId, 'data-slot': index, class: 'board-slot empty'
         });
-      }
 
-      if (!this.hideIcons) {
-        const iconColors = {
-          cottonMill: '#8b7355aa',
-          coalMine:   '#bbbbbbaa', // lighter for dark bg
-          ironWorks:  '#8b7355aa',
-          port:       '#8b7355aa',
-          shipyard:   '#8b7355aa'
-        };
+        // Clip path for rounded corners
+        const clipId = 'clip-' + locId + '-' + index;
+        const defs = this._ensureDefs();
+        const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+        clipPath.setAttribute('id', clipId);
+        const clipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        clipRect.setAttribute('x', cx - half);
+        clipRect.setAttribute('y', cy - half);
+        clipRect.setAttribute('width', size);
+        clipRect.setAttribute('height', size);
+        clipRect.setAttribute('rx', 2);
+        clipPath.appendChild(clipRect);
+        defs.appendChild(clipPath);
+
         if (isDual) {
-          // Render each icon with its own color
-          const icon1 = BOARD.industryIcons[allowed[0]] || '?';
-          const icon2 = BOARD.industryIcons[allowed[1]] || '?';
-          const fs = '5';
-          this.createAndAppend('text', {
-            x: cx - 3, y: cy + 2.5,
-            'text-anchor': 'middle', 'font-size': fs,
-            fill: iconColors[allowed[0]] || '#8b7355aa', 'pointer-events': 'none'
-          }).textContent = icon1;
-          this.createAndAppend('text', {
-            x: cx, y: cy + 2.5,
-            'text-anchor': 'middle', 'font-size': fs,
-            fill: '#8b735566', 'pointer-events': 'none'
-          }).textContent = '/';
-          this.createAndAppend('text', {
-            x: cx + 3, y: cy + 2.5,
-            'text-anchor': 'middle', 'font-size': fs,
-            fill: iconColors[allowed[1]] || '#8b7355aa', 'pointer-events': 'none'
-          }).textContent = icon2;
+          // Try combined image first
+          const dualKey = allowed.slice().sort().join('+');
+          const dualImg = BOARD.industryDualImages && BOARD.industryDualImages[dualKey];
+          if (dualImg) {
+            this.createAndAppend('image', {
+              href: dualImg,
+              x: cx - half, y: cy - half,
+              width: size, height: size,
+              preserveAspectRatio: 'xMidYMid slice',
+              opacity: 0.55,
+              'clip-path': 'url(#' + clipId + ')',
+              'pointer-events': 'none'
+            });
+          } else {
+            // Side by side: left half = first type, right half = second type
+            const img1 = BOARD.industryImages[allowed[0]];
+            const img2 = BOARD.industryImages[allowed[1]];
+            if (img1) {
+              this.createAndAppend('image', {
+                href: img1,
+                x: cx - half, y: cy - half,
+                width: half, height: size,
+                preserveAspectRatio: 'xMidYMid slice',
+                opacity: 0.55,
+                'clip-path': 'url(#' + clipId + ')',
+                'pointer-events': 'none'
+              });
+            }
+            if (img2) {
+              this.createAndAppend('image', {
+                href: img2,
+                x: cx, y: cy - half,
+                width: half, height: size,
+                preserveAspectRatio: 'xMidYMid slice',
+                opacity: 0.55,
+                'clip-path': 'url(#' + clipId + ')',
+                'pointer-events': 'none'
+              });
+            }
+          }
         } else {
-          this.createAndAppend('text', {
-            x: cx, y: cy + 2.5,
-            'text-anchor': 'middle', 'font-size': '6',
-            fill: iconColors[allowed[0]] || '#8b7355aa',
-            'pointer-events': 'none'
-          }).textContent = BOARD.industryIcons[allowed[0]] || '?';
+          const imgSrc = BOARD.industryImages[allowed[0]];
+          if (imgSrc) {
+            this.createAndAppend('image', {
+              href: imgSrc,
+              x: cx - half, y: cy - half,
+              width: size, height: size,
+              preserveAspectRatio: 'xMidYMid slice',
+              opacity: 0.3,
+              'clip-path': 'url(#' + clipId + ')',
+              'pointer-events': 'none'
+            });
+          }
+        }
+      } else {
+        // Letters mode (hideIcons=false but no images, or hideIcons=true)
+        const dimColors = {
+          cottonMill: '#f5f0ea55',
+          coalMine:   '#33333366',
+          ironWorks:  '#d4740e44',
+          port:       '#2196F344',
+          shipyard:   '#6d432a44'
+        };
+
+        if (isDual) {
+          const x1 = cx - half, y1 = cy - half;
+          const x2 = cx + half, y2 = cy + half;
+          this.createAndAppend('polygon', {
+            points: x1+','+y1 + ' ' + x2+','+y1 + ' ' + x1+','+y2,
+            fill: dimColors[allowed[0]] || '#ffffff22'
+          });
+          this.createAndAppend('polygon', {
+            points: x2+','+y1 + ' ' + x2+','+y2 + ' ' + x1+','+y2,
+            fill: dimColors[allowed[1]] || '#ffffff22'
+          });
+          this.createAndAppend('rect', {
+            x: cx - half, y: cy - half, width: size, height: size, rx: 2,
+            fill: 'none', stroke: '#8b735566', 'stroke-width': 0.8,
+            'data-location': locId, 'data-slot': index, class: 'board-slot empty'
+          });
+          this.createAndAppend('line', {
+            x1: x2, y1: y1, x2: x1, y2: y2,
+            stroke: '#8b735566', 'stroke-width': 0.5
+          });
+        } else {
+          this.createAndAppend('rect', {
+            x: cx - half, y: cy - half, width: size, height: size, rx: 2,
+            fill: dimColors[allowed[0]] || '#ffffff18',
+            stroke: '#8b735566', 'stroke-width': 0.8,
+            'data-location': locId, 'data-slot': index, class: 'board-slot empty'
+          });
+        }
+
+        // Letter icons only when not hideIcons
+        if (!this.hideIcons) {
+          const iconColors = {
+            cottonMill: '#8b7355aa',
+            coalMine:   '#bbbbbbaa',
+            ironWorks:  '#8b7355aa',
+            port:       '#8b7355aa',
+            shipyard:   '#8b7355aa'
+          };
+          if (isDual) {
+            const icon1 = BOARD.industryIcons[allowed[0]] || '?';
+            const icon2 = BOARD.industryIcons[allowed[1]] || '?';
+            this.createAndAppend('text', {
+              x: cx - 3, y: cy + 2.5,
+              'text-anchor': 'middle', 'font-size': '5',
+              fill: iconColors[allowed[0]] || '#8b7355aa', 'pointer-events': 'none'
+            }).textContent = icon1;
+            this.createAndAppend('text', {
+              x: cx, y: cy + 2.5,
+              'text-anchor': 'middle', 'font-size': '5',
+              fill: '#8b735566', 'pointer-events': 'none'
+            }).textContent = '/';
+            this.createAndAppend('text', {
+              x: cx + 3, y: cy + 2.5,
+              'text-anchor': 'middle', 'font-size': '5',
+              fill: iconColors[allowed[1]] || '#8b7355aa', 'pointer-events': 'none'
+            }).textContent = icon2;
+          } else {
+            this.createAndAppend('text', {
+              x: cx, y: cy + 2.5,
+              'text-anchor': 'middle', 'font-size': '6',
+              fill: iconColors[allowed[0]] || '#8b7355aa',
+              'pointer-events': 'none'
+            }).textContent = BOARD.industryIcons[allowed[0]] || '?';
+          }
         }
       }
     }
+  },
+
+  // Ensure a <defs> element exists in the SVG
+  _ensureDefs() {
+    let defs = this.svg.querySelector('defs');
+    if (!defs) {
+      defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      this.svg.insertBefore(defs, this.svg.firstChild);
+    }
+    return defs;
   },
 
   // SVG helpers
