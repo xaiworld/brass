@@ -159,13 +159,28 @@ const GameUI = {
   // Calculate real-time VP breakdown per player
   calculateVPBreakdown() {
     const s = gameState;
-    const breakdowns = s.players.map(() => ({ scored: 0, tiles: 0, links: 0, money: 0, total: 0, details: [] }));
+    const isFinished = s.phase === 'finished';
+    const breakdowns = s.players.map(() => ({ prevEra: 0, tiles: 0, links: 0, money: 0, total: 0, details: [] }));
 
-    for (let i = 0; i < s.players.length; i++) {
-      breakdowns[i].scored = s.players[i].vp;
+    // p.vp contains:
+    // - During canal era: 0 (nothing scored yet)
+    // - During rail era: canal era scored VP
+    // - When finished: final total (everything included, money bonus too)
+    if (isFinished) {
+      // Game over: p.vp IS the final total, no need to calculate
+      for (let i = 0; i < s.players.length; i++) {
+        breakdowns[i].total = s.players[i].vp;
+        breakdowns[i].prevEra = s.players[i].vp;
+        breakdowns[i].details.push('Final score: ' + s.players[i].vp + 'VP');
+      }
+      return breakdowns;
     }
 
-    // Flipped tiles
+    for (let i = 0; i < s.players.length; i++) {
+      breakdowns[i].prevEra = s.players[i].vp; // 0 in canal, canal score in rail
+    }
+
+    // Current era flipped tiles (not yet scored)
     for (const [locId, loc] of Object.entries(s.board.locations)) {
       for (const slot of loc.slots) {
         if (slot.flipped && slot.owner !== null) {
@@ -178,7 +193,7 @@ const GameUI = {
       }
     }
 
-    // Links
+    // Current era links
     for (const link of Object.values(s.board.links)) {
       if (link.owner !== null && link.type) {
         let vp = 0;
@@ -198,11 +213,11 @@ const GameUI = {
       }
     }
 
-    // Money
+    // Money projection
     for (let i = 0; i < s.players.length; i++) {
       const mv = Math.floor(s.players[i].money / 10);
       breakdowns[i].money = mv;
-      breakdowns[i].total = breakdowns[i].scored + breakdowns[i].tiles + breakdowns[i].links + breakdowns[i].money;
+      breakdowns[i].total = breakdowns[i].prevEra + breakdowns[i].tiles + breakdowns[i].links + breakdowns[i].money;
     }
 
     return breakdowns;
@@ -210,44 +225,8 @@ const GameUI = {
 
   // Calculate real-time projected VP for each player
   calculateLiveVP() {
-    const s = gameState;
-    const vps = s.players.map(() => 0);
-
-    // VP from scored eras (already in p.vp)
-    for (let i = 0; i < s.players.length; i++) {
-      vps[i] += s.players[i].vp;
-    }
-
-    // VP from currently flipped tiles (not yet scored if mid-era)
-    for (const loc of Object.values(s.board.locations)) {
-      for (const slot of loc.slots) {
-        if (slot.flipped && slot.owner !== null) {
-          const tileData = INDUSTRIES[slot.industryType]?.levels[slot.level];
-          if (tileData) vps[slot.owner] += tileData.vp;
-        }
-      }
-    }
-
-    // VP from built links
-    for (const link of Object.values(s.board.links)) {
-      if (link.owner !== null && link.type) {
-        let linkVP = 0;
-        // Count flipped tiles at each end
-        for (const locId of [link.from, link.to]) {
-          const loc = s.board.locations[locId];
-          if (!loc) continue;
-          for (const slot of loc.slots) {
-            if (slot.flipped && slot.owner !== null) linkVP++;
-          }
-        }
-        vps[link.owner] += linkVP;
-      }
-    }
-
-    // VP from money (1 per £10)
-    for (let i = 0; i < s.players.length; i++) {
-      vps[i] += Math.floor(s.players[i].money / 10);
-    }
+    const bds = this.calculateVPBreakdown();
+    return bds.map(b => b.total);
 
     return vps;
   },
@@ -286,6 +265,10 @@ const GameUI = {
   navLive() {
     this.navVersion = -1;
     this.isViewingHistory = false;
+    if (this._realState) {
+      gameState = this._realState;
+      this._realState = null;
+    }
     this.updateNavLabel();
     this.updateAll();
   },
@@ -311,17 +294,20 @@ const GameUI = {
     }
   },
 
+  _realState: null,
+
   showHistoryState(histState) {
     this.isViewingHistory = true;
-    const realState = gameState;
-    gameState = histState;
+    this._realState = gameState;
+    gameState = histState; // keep historical state active for hover/render
     this.updateNavLabel();
     this.updateGameInfo();
     this.updatePlayerBar();
     this.updateLog();
     this.updateActionPanel();
     BoardRenderer.render();
-    gameState = realState;
+    // Don't restore — keep histState as gameState while viewing history
+    // It gets restored in navLive() or updateAll()
   },
 
   updateNavLabel() {
@@ -346,12 +332,18 @@ const GameUI = {
       popup.className = 'vp-breakdown-popup';
       document.body.appendChild(popup);
     }
+    const isFinished = gameState.phase === 'finished';
+    const era = gameState.era === 'canal' ? 'Canal' : 'Rail';
     let html = '<div class="vp-bd-title">VP Breakdown</div>';
-    html += '<div class="vp-bd-row">Scored (prev eras): <strong>' + bd.scored + '</strong></div>';
-    html += '<div class="vp-bd-row">Flipped tiles: <strong>' + bd.tiles + '</strong></div>';
-    html += '<div class="vp-bd-row">Links: <strong>' + bd.links + '</strong></div>';
-    html += '<div class="vp-bd-row">Money (£' + gameState.players[playerIdx].money + '/10): <strong>' + bd.money + '</strong></div>';
-    html += '<div class="vp-bd-total">Total: <strong>' + bd.total + '</strong></div>';
+    if (isFinished) {
+      html += '<div class="vp-bd-total">Final: <strong>' + bd.total + '</strong> VP</div>';
+    } else {
+      if (bd.prevEra > 0) html += '<div class="vp-bd-row">Canal era scored: <strong>' + bd.prevEra + '</strong></div>';
+      html += '<div class="vp-bd-row">' + era + ' flipped tiles: <strong>' + bd.tiles + '</strong></div>';
+      html += '<div class="vp-bd-row">' + era + ' links: <strong>' + bd.links + '</strong></div>';
+      html += '<div class="vp-bd-row">Money (£' + gameState.players[playerIdx].money + '/10): <strong>' + bd.money + '</strong></div>';
+      html += '<div class="vp-bd-total">Projected: <strong>' + bd.total + '</strong></div>';
+    }
     if (bd.details.length > 0) {
       html += '<div class="vp-bd-details">';
       for (const d of bd.details) html += '<div class="vp-bd-detail">' + d + '</div>';
@@ -417,7 +409,12 @@ const GameUI = {
           '<a href="/lobby" class="btn btn-primary" style="margin-top:16px">Back to Lobby</a></div>';
         return;
       }
-      gameState = data.state;
+      if (this.isViewingHistory) {
+        // Store new state without overwriting the historical view
+        this._realState = data.state;
+      } else {
+        gameState = data.state;
+      }
       stateVersion = data.version;
       this.updateAll();
     } catch (e) {
