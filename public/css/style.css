@@ -718,6 +718,18 @@ body.is-mobile .mobile-tabs { display: flex; }
 .mobile-panel-close h3 { color: var(--gold); font-size: 16px; margin: 0; }
 .mobile-panel-close button { font-size: 20px; }
 
+/* Mobile turn navigator strip */
+.mobile-turn-nav {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.7);
+  border-radius: 4px;
+}
+body.is-mobile .mobile-turn-nav { display: flex; }
+
 /* Board: full width on mobile */
 body.is-mobile .board-container {
   flex: none;
@@ -740,18 +752,19 @@ body.is-mobile .board-controls {
 body.is-mobile .board-controls .controls-row:nth-child(2) { display: none; }
 body.is-mobile .board-controls input[type="range"] { width: 40px; }
 
-/* Floating hand: bottom dock on mobile */
+/* Floating hand: bottom dock on mobile above tab bar */
 body.is-mobile .floating-hand {
-  bottom: 52px; /* above tab bar */
-  left: 0;
-  right: 0;
+  bottom: 50px;
+  left: 4px;
+  right: 4px;
   transform: none;
-  width: 100%;
-  max-width: 100vw;
+  width: auto;
+  max-width: calc(100vw - 8px);
   border-radius: 8px 8px 0 0;
-  height: 95px;
+  height: 90px;
   min-width: auto;
   resize: none;
+  padding: 4px 8px;
 }
 body.is-mobile .floating-hand-cards .card { min-width: 36px; }
 

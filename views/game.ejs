@@ -67,6 +67,14 @@
             <button class="btn btn-sm" id="like-xai-btn" onclick="BoardRenderer.loadXaiPositions()" style="display:none">Like Xai</button>
           </div>
         </div>
+        <!-- Mobile turn nav (on board view) -->
+        <div class="mobile-turn-nav" id="mobile-board-turn-nav">
+          <button class="btn nav-btn" onclick="GameUI.navFirst()">⏮</button>
+          <button class="btn nav-btn" onclick="GameUI.navPrev()">◀</button>
+          <span id="mobile-board-turn-label" style="font-size:11px;min-width:50px;text-align:center">Live</span>
+          <button class="btn nav-btn" onclick="GameUI.navNext()">▶</button>
+          <button class="btn nav-btn" onclick="GameUI.navLive()">⏭</button>
+        </div>
         <svg id="game-board" viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
 
@@ -108,6 +116,9 @@
 
     <!-- Mobile tab bar -->
     <div class="mobile-tabs" id="mobile-tabs">
+      <button class="mobile-tab" onclick="MobileUI.showTab('info')">
+        <span class="mobile-tab-icon">&#9432;</span>Info
+      </button>
       <button class="mobile-tab active" onclick="MobileUI.showTab('board')">
         <span class="mobile-tab-icon">&#9881;</span>Board
       </button>
@@ -116,9 +127,6 @@
       </button>
       <button class="mobile-tab" onclick="MobileUI.showTab('actions')">
         <span class="mobile-tab-icon">&#9889;</span>Actions
-      </button>
-      <button class="mobile-tab" onclick="MobileUI.showTab('info')">
-        <span class="mobile-tab-icon">&#9432;</span>Info
       </button>
       <button class="mobile-tab" onclick="MobileUI.showTab('log')">
         <span class="mobile-tab-icon">&#9776;</span>Log
@@ -152,11 +160,24 @@
         <h3>Game Log</h3>
         <button class="btn btn-sm" onclick="MobileUI.showTab('board')">Close</button>
       </div>
+      <div class="mobile-turn-nav" id="mobile-log-turn-nav">
+        <button class="btn nav-btn" onclick="GameUI.navFirst()">⏮</button>
+        <button class="btn nav-btn" onclick="GameUI.navPrev()">◀</button>
+        <span id="mobile-log-turn-label" style="font-size:11px;min-width:50px;text-align:center">Live</span>
+        <button class="btn nav-btn" onclick="GameUI.navNext()">▶</button>
+        <button class="btn nav-btn" onclick="GameUI.navLive()">⏭</button>
+      </div>
       <div id="mobile-log-content"></div>
     </div>
   </div>
 
   <script>
+    // Early mobile detection — must run before BoardRenderer.init()
+    if (/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || (window.innerWidth <= 768 && 'ontouchstart' in window)) {
+      document.body.classList.add('is-mobile');
+    }
+
     const GAME_ID = <%= game.id %>;
     const USER_ID = <%= userId %>;
     let gameState = <%- JSON.stringify(state) %>;
@@ -173,15 +194,12 @@
   <script>
     // Mobile detection and UI
     const MobileUI = {
-      isMobile: /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-        || (window.innerWidth <= 768 && 'ontouchstart' in window),
+      isMobile: document.body.classList.contains('is-mobile'),
+      currentTab: 'board',
 
       init() {
         if (this.isMobile) {
-          document.body.classList.add('is-mobile');
-          // Hide floating hand on mobile (use Hand tab instead)
-          const fh = document.getElementById('floating-hand');
-          if (fh) fh.style.display = 'none';
+          // Keep floating hand visible on board tab (re-style for mobile)
           // Hide desktop log (use Log tab instead)
           const lw = document.getElementById('log-wrapper');
           if (lw) lw.style.display = 'none';
@@ -189,18 +207,24 @@
       },
 
       showTab(tab) {
+        this.currentTab = tab;
+        const tabOrder = ['info', 'board', 'hand', 'actions', 'log'];
         // Update tab bar
         document.querySelectorAll('.mobile-tab').forEach((t, i) => {
-          const tabs = ['board', 'hand', 'actions', 'info', 'log'];
-          t.classList.toggle('active', tabs[i] === tab);
+          t.classList.toggle('active', tabOrder[i] === tab);
         });
         // Hide all overlays
         document.querySelectorAll('.mobile-panel-overlay').forEach(p => p.classList.remove('active'));
 
-        if (tab === 'board') {
-          // Show board, hide overlays
-          return;
-        }
+        // Show/hide floating hand based on tab
+        const fh = document.getElementById('floating-hand');
+        if (fh) fh.style.display = (tab === 'board') ? '' : 'none';
+
+        // Show/hide board
+        const bc = document.getElementById('board-container');
+        if (bc) bc.style.display = (tab === 'board') ? '' : 'none';
+
+        if (tab === 'board') return;
 
         const panel = document.getElementById('mobile-panel-' + tab);
         if (panel) {
@@ -212,24 +236,62 @@
       populatePanel(tab) {
         if (tab === 'hand') {
           const target = document.getElementById('mobile-hand-content');
+          if (!target) return;
+          // Re-render hand and mat directly into the mobile panel
+          target.innerHTML = '';
           const handPanel = document.getElementById('hand-panel');
           const matPanel = document.getElementById('mat-panel');
-          if (target && handPanel) {
-            target.innerHTML = handPanel.innerHTML + (matPanel ? '<hr style="border-color:#333;margin:12px 0">' + matPanel.innerHTML : '');
+          if (handPanel) {
+            const handClone = handPanel.cloneNode(true);
+            handClone.id = '';
+            target.appendChild(handClone);
           }
+          if (matPanel) {
+            const hr = document.createElement('hr');
+            hr.style.cssText = 'border-color:#333;margin:12px 0';
+            target.appendChild(hr);
+            const matClone = matPanel.cloneNode(true);
+            matClone.id = '';
+            target.appendChild(matClone);
+          }
+          // Re-bind card click events in cloned hand
+          target.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', function() {
+              const cardId = this.getAttribute('data-card-id');
+              if (cardId && typeof GameUI !== 'undefined') {
+                GameUI.selectCard(cardId);
+                MobileUI.showTab('actions');
+              }
+            });
+          });
         } else if (tab === 'actions') {
           const target = document.getElementById('mobile-actions-content');
           const actionPanel = document.getElementById('action-panel');
-          if (target && actionPanel) target.innerHTML = actionPanel.innerHTML;
+          if (target && actionPanel) {
+            target.innerHTML = '';
+            const clone = actionPanel.cloneNode(true);
+            clone.id = '';
+            target.appendChild(clone);
+            // Re-bind action button clicks
+            target.querySelectorAll('.action-btn, .popup-action, .btn').forEach(btn => {
+              const onclick = btn.getAttribute('onclick');
+              if (onclick) {
+                btn.addEventListener('click', function() { eval(onclick); });
+                btn.removeAttribute('onclick');
+              }
+            });
+          }
         } else if (tab === 'info') {
           const target = document.getElementById('mobile-info-content');
-          const gameInfo = document.getElementById('game-info');
-          const playerBar = document.getElementById('player-bar');
-          const turnNav = document.getElementById('turn-nav');
-          if (target) {
-            target.innerHTML = (gameInfo ? gameInfo.outerHTML : '')
-              + (playerBar ? playerBar.outerHTML : '')
-              + (turnNav ? turnNav.outerHTML : '');
+          if (!target) return;
+          target.innerHTML = '';
+          for (const srcId of ['game-info', 'player-bar', 'turn-nav']) {
+            const src = document.getElementById(srcId);
+            if (src) {
+              const clone = src.cloneNode(true);
+              clone.id = '';
+              target.appendChild(clone);
+            }
           }
         } else if (tab === 'log') {
           const target = document.getElementById('mobile-log-content');

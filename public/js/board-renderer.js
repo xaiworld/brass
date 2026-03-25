@@ -324,11 +324,23 @@ const BoardRenderer = {
     incomePanel:     { x: 30,  y: 220 }
   },
 
+  // Mobile layout: panels in map corners
+  MARKET_MOBILE: {
+    vpPanel:         { x: 30,  y: 20 },    // top-left
+    turnOrderPanel:  { x: 573, y: 20 },    // top-right
+    moneySpentPanel: { x: 573, y: 110 },   // just under turn order
+    coalPanel:       { x: 20,  y: 85 },
+    ironPanel:       { x: 48,  y: 85 },
+    incomePanel:     { x: 30,  y: 360 },   // bottom-left
+    demandPanel:     { x: 573, y: 360 }    // bottom-right
+  },
+
   // Working copy (may be mutated during drag, restored on undo)
   marketDefaults: {},
 
   initMarketDefaults() {
-    this.marketDefaults = JSON.parse(JSON.stringify(this.MARKET_FACTORY));
+    const source = document.body.classList.contains('is-mobile') ? this.MARKET_MOBILE : this.MARKET_FACTORY;
+    this.marketDefaults = JSON.parse(JSON.stringify(source));
   },
 
   getMarketPos(id) {

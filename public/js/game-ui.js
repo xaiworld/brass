@@ -311,14 +311,11 @@ const GameUI = {
   },
 
   updateNavLabel() {
-    const label = document.getElementById('turn-nav-label');
-    if (!label) return;
-    if (this.navVersion === -1) {
-      label.textContent = 'Live';
-      label.style.color = '#2ecc71';
-    } else {
-      label.textContent = (this.navVersion + 1) + '/' + this.navTotalVersions;
-      label.style.color = '#e94560';
+    const text = this.navVersion === -1 ? 'Live' : (this.navVersion + 1) + '/' + this.navTotalVersions;
+    const color = this.navVersion === -1 ? '#2ecc71' : '#e94560';
+    for (const id of ['turn-nav-label', 'mobile-board-turn-label', 'mobile-log-turn-label']) {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = text; el.style.color = color; }
     }
   },
 
