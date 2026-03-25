@@ -99,7 +99,12 @@
                         <button type="submit" class="btn btn-primary">Start</button>
                       </form>
                     <% } else { %>
-                      <form method="POST" action="/games/<%= game.id %>/add-bot" style="display:inline">
+                      <form method="POST" action="/games/<%= game.id %>/add-bot" style="display:inline;gap:2px">
+                        <select name="tier" style="font-size:9px;padding:1px 3px">
+                          <option value="pro">Pro</option>
+                          <option value="average" selected>Average</option>
+                          <option value="noob">Noob</option>
+                        </select>
                         <button type="submit" class="btn btn-sm">+ Bot</button>
                       </form>
                     <% } %>
@@ -167,13 +172,16 @@
 
         <div class="panel-section" style="margin-top:12px">
           <h4 style="color:var(--gold);margin-bottom:8px">Bot Training</h4>
-          <div style="display:flex;gap:4px">
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
             <form method="POST" action="/admin/toggle-training">
               <input type="hidden" name="gamesPerBatch" value="3">
               <input type="hidden" name="intervalMs" value="10000">
               <button type="submit" class="btn btn-sm" style="background:<%= trainingStatus.active ? '#e74c3c' : '#27ae60' %>">
-                <%= trainingStatus.active ? 'Stop Training' : 'Start Training' %>
+                <%= trainingStatus.active ? 'Stop' : 'Train' %>
               </button>
+            </form>
+            <form method="POST" action="/admin/run-pipeline" onsubmit="return confirm('Run full pipeline? (2000 games, may take a few minutes)')">
+              <button type="submit" class="btn btn-sm" style="background:#3498db">Pipeline</button>
             </form>
             <form method="POST" action="/admin/reset-training" onsubmit="return confirm('Reset all training data?')">
               <button type="submit" class="btn btn-sm" style="color:var(--accent)">Reset</button>

@@ -4,7 +4,7 @@ const { createInitialState } = require('../lib/game-setup');
 const { playerColorNames } = require('../lib/industry-data');
 const db = require('../lib/db');
 const { APP_VERSION, isCompatible } = require('../lib/version');
-const { startTraining, stopTraining, isTrainingActive, getTrainingStatus } = require('../lib/training-runner');
+const { startTraining, stopTraining, isTrainingActive, getTrainingStatus, runFullPipeline } = require('../lib/training-runner');
 const router = express.Router();
 
 router.get('/lobby', requireLogin, (req, res) => {
@@ -116,7 +116,8 @@ router.post('/games/quick', requireLogin, (req, res) => {
   const dbPlayers = db.getGamePlayers(game.id);
   const players = dbPlayers.map(p => {
     const user = db.findUserById(p.user_id);
-    return { userId: p.user_id, username: user ? user.username : 'Unknown', color: p.color, isBot: p.is_bot };
+    const prefs = db.getUserPrefs(p.user_id);
+    return { userId: p.user_id, username: user ? user.username : 'Unknown', color: p.color, isBot: p.is_bot, botTier: prefs.botTier || null };
   });
 
   const state = createInitialState(players, players.length);
@@ -198,17 +199,21 @@ router.post('/games/:id/add-bot', requireLogin, (req, res) => {
   const players = db.getGamePlayers(gameId);
   if (players.length >= game.num_players) return res.redirect('/lobby');
 
-  const botNames = ['Bot_Alpha', 'Bot_Beta', 'Bot_Gamma'];
+  const tier = req.body.tier || 'average';
+  const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+  const botNames = ['Bot_' + tierLabel + '_1', 'Bot_' + tierLabel + '_2', 'Bot_' + tierLabel + '_3'];
   const usedBots = players.filter(p => p.is_bot).map(p => {
     const u = db.findUserById(p.user_id);
     return u ? u.username : '';
   });
-  const botName = botNames.find(n => !usedBots.includes(n)) || 'Bot_' + Date.now();
+  const botName = botNames.find(n => !usedBots.includes(n)) || 'Bot_' + tierLabel + '_' + Date.now();
 
   let bot = db.findUserByUsername(botName);
   if (!bot || !bot.is_bot) {
     bot = db.createUser(botName, 'bot', true);
   }
+  // Store tier in bot user prefs
+  db.setUserPrefs(bot.id, { botTier: tier });
   const seat = players.length;
   db.addGamePlayer(gameId, bot.id, seat, playerColorNames[seat], true);
   res.redirect('/lobby');
@@ -264,6 +269,21 @@ router.post('/admin/toggle-training', requireLogin, (req, res) => {
     const intervalMs = parseInt(req.body.intervalMs) || 10000;
     startTraining(gamesPerBatch, intervalMs);
   }
+  res.redirect('/lobby');
+});
+
+// Run full training pipeline (xai admin only)
+router.post('/admin/run-pipeline', requireLogin, (req, res) => {
+  if (req.session.user.username !== 'xai') return res.redirect('/lobby');
+  if (isTrainingActive()) stopTraining();
+  // Run in background
+  setTimeout(() => {
+    try {
+      runFullPipeline(1000, 1000);
+    } catch (e) {
+      console.error('[Pipeline] Error:', e.message, e.stack);
+    }
+  }, 100);
   res.redirect('/lobby');
 });
 
