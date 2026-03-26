@@ -67,14 +67,6 @@
             <button class="btn btn-sm" id="like-xai-btn" onclick="BoardRenderer.loadXaiPositions()" style="display:none">Like Xai</button>
           </div>
         </div>
-        <!-- Mobile turn nav (on board view) -->
-        <div class="mobile-turn-nav" id="mobile-board-turn-nav">
-          <button class="btn nav-btn" onclick="GameUI.navFirst()">⏮</button>
-          <button class="btn nav-btn" onclick="GameUI.navPrev()">◀</button>
-          <span id="mobile-board-turn-label" style="font-size:11px;min-width:50px;text-align:center">Live</span>
-          <button class="btn nav-btn" onclick="GameUI.navNext()">▶</button>
-          <button class="btn nav-btn" onclick="GameUI.navLive()">⏭</button>
-        </div>
         <svg id="game-board" viewBox="0 0 600 520" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
 
@@ -112,6 +104,15 @@
         <label class="board-control-check" style="margin-left:4px" onclick="event.stopPropagation()"><input type="checkbox" id="log-timestamps" onchange="GameUI.logShowTimestamps=this.checked;GameUI.updateLog()"> Time</label>
       </div>
       <div class="log-panel" id="log-panel"></div>
+    </div>
+
+    <!-- Mobile turn nav (always visible, fixed above tabs) -->
+    <div class="mobile-turn-nav" id="mobile-board-turn-nav">
+      <button class="btn nav-btn" onclick="GameUI.navFirst()">⏮</button>
+      <button class="btn nav-btn" onclick="GameUI.navPrev()">◀</button>
+      <span id="mobile-board-turn-label" style="font-size:11px;min-width:50px;text-align:center">Live</span>
+      <button class="btn nav-btn" onclick="GameUI.navNext()">▶</button>
+      <button class="btn nav-btn" onclick="GameUI.navLive()">⏭</button>
     </div>
 
     <!-- Mobile tab bar -->
