@@ -243,7 +243,6 @@
         if (tab === 'hand') {
           const target = document.getElementById('mobile-hand-content');
           if (!target) return;
-          // Re-render hand and mat directly into the mobile panel
           target.innerHTML = '';
           const handPanel = document.getElementById('hand-panel');
           const matPanel = document.getElementById('mat-panel');
@@ -260,16 +259,8 @@
             matClone.id = '';
             target.appendChild(matClone);
           }
-          // Re-bind card click events in cloned hand
-          target.querySelectorAll('.card').forEach(card => {
-            card.addEventListener('click', function() {
-              const cardId = this.getAttribute('data-card-id');
-              if (cardId && typeof GameUI !== 'undefined') {
-                GameUI.selectCard(cardId);
-                MobileUI.showTab('actions');
-              }
-            });
-          });
+          // Re-bind all interactive elements in cloned content
+          this.rebindHandlers(target);
         } else if (tab === 'actions') {
           const target = document.getElementById('mobile-actions-content');
           const actionPanel = document.getElementById('action-panel');
@@ -278,14 +269,7 @@
             const clone = actionPanel.cloneNode(true);
             clone.id = '';
             target.appendChild(clone);
-            // Re-bind action button clicks
-            target.querySelectorAll('.action-btn, .popup-action, .btn').forEach(btn => {
-              const onclick = btn.getAttribute('onclick');
-              if (onclick) {
-                btn.addEventListener('click', function() { eval(onclick); });
-                btn.removeAttribute('onclick');
-              }
-            });
+            this.rebindHandlers(target);
           }
         } else if (tab === 'info') {
           const target = document.getElementById('mobile-info-content');
@@ -307,6 +291,37 @@
             target.scrollTop = target.scrollHeight;
           }
         }
+      },
+
+      rebindHandlers(container) {
+        // Re-bind onclick attributes that were lost during cloneNode
+        container.querySelectorAll('[onclick]').forEach(el => {
+          const code = el.getAttribute('onclick');
+          el.removeAttribute('onclick');
+          el.addEventListener('click', function(e) {
+            e.stopPropagation();
+            try { eval(code); } catch(err) { console.log('[Mobile] handler error:', err); }
+          });
+        });
+        container.querySelectorAll('[onchange]').forEach(el => {
+          const code = el.getAttribute('onchange');
+          el.removeAttribute('onchange');
+          el.addEventListener('change', function(e) {
+            try { eval(code); } catch(err) { console.log('[Mobile] handler error:', err); }
+            // Re-populate panel after state change
+            setTimeout(() => MobileUI.populatePanel(MobileUI.currentTab), 100);
+          });
+        });
+        // Card clicks -> select + switch to actions
+        container.querySelectorAll('.card').forEach(card => {
+          card.addEventListener('click', function() {
+            const cardId = this.getAttribute('data-card-id');
+            if (cardId && typeof GameUI !== 'undefined') {
+              GameUI.selectCard(cardId);
+              MobileUI.showTab('actions');
+            }
+          });
+        });
       }
     };
     MobileUI.init();

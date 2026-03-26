@@ -1609,12 +1609,18 @@ const GameUI = {
         html += '<div class="mat-outofgame"><div class="mat-header"><span class="mat-name muted">Out of game</span></div>';
         if (developed.length > 0) {
           html += '<div class="mat-oog-row"><span class="muted">Developed:</span> ';
-          html += developed.map(d => '<span class="mat-tile-box tile-used" title="Developed">' + d.level + '</span>').join('');
+          html += developed.map(d => {
+            const icon = BOARD.industryIcons[d.type] || '?';
+            return '<span class="mat-tile-box tile-used" title="Developed: ' + (d.type || '') + ' L' + d.level + '">' + icon + d.level + '</span>';
+          }).join('');
           html += '</div>';
         }
         if (canalRemoved.length > 0) {
           html += '<div class="mat-oog-row"><span class="muted">Canal removed:</span> ';
-          html += canalRemoved.map(c => '<span class="mat-tile-box tile-used" title="Removed end of Canal era">' + c.level + '</span>').join('');
+          html += canalRemoved.map(c => {
+            const icon = BOARD.industryIcons[c.type] || '?';
+            return '<span class="mat-tile-box tile-used" title="Removed: ' + (c.type || '') + ' L' + c.level + '">' + icon + c.level + '</span>';
+          }).join('');
           html += '</div>';
         }
         html += '</div>';

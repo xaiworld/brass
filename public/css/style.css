@@ -725,15 +725,16 @@ body.is-mobile .mobile-tabs { display: flex; }
 body.is-mobile #mobile-board-turn-nav {
   display: flex;
   position: fixed;
-  bottom: 48px;
+  bottom: 50px; /* above tabs with gap */
   left: 0;
   right: 0;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 5px 8px;
+  padding: 6px 8px;
   background: rgba(10, 10, 20, 0.95);
-  border-top: 1px solid #444;
+  border-top: 1px solid #555;
+  border-bottom: 1px solid #333;
   z-index: 41;
 }
 /* Log panel turn nav stays inline (not fixed) */
@@ -751,7 +752,7 @@ body.is-mobile #mobile-log-turn-nav {
 body.is-mobile .board-container {
   flex: none;
   width: 100%;
-  height: calc(100vh - 220px); /* navbar + tab bar + turn nav + floating hand */
+  height: calc(100vh - 240px); /* navbar + tabs + turn nav + floating hand */
   padding: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
@@ -772,18 +773,19 @@ body.is-mobile .board-controls input[type="range"] { width: 40px; }
 /* Floating hand: bottom dock on mobile, above turn nav + tabs */
 body.is-mobile .floating-hand {
   position: fixed;
-  bottom: 80px; /* 48px tabs + 32px turn nav */
+  bottom: 84px; /* 48px tabs + 4px gap + 32px turn nav */
   left: 0;
   right: 0;
   transform: none;
   width: 100%;
   max-width: 100vw;
-  border-radius: 8px 8px 0 0;
-  height: 95px;
+  border-radius: 0;
+  height: 105px;
   min-width: auto;
   resize: none;
-  padding: 4px 8px;
+  padding: 6px 10px;
   z-index: 40;
+  border-top: 1px solid #444;
 }
 body.is-mobile .floating-hand-cards .card { min-width: 36px; }
 
