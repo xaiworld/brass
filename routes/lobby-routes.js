@@ -159,7 +159,23 @@ router.post('/games/:id/invite', requireLogin, (req, res) => {
     return res.redirect('/lobby');
   }
   const username = (req.body.username || '').trim();
-  if (username) db.inviteToGame(gameId, username);
+  if (username) {
+    const invited = db.inviteToGame(gameId, username);
+    if (invited) {
+      try {
+        const { sendToUser } = require('../lib/notifications');
+        const invitedUser = db.findUserByUsername(username);
+        if (invitedUser) {
+          sendToUser(invitedUser.id, {
+            title: 'Game Invite!',
+            body: `${req.session.user.username} invited you to "${game.name}"`,
+            url: '/lobby',
+            tag: 'invite-' + gameId,
+          });
+        }
+      } catch (e) { /* notifications optional */ }
+    }
+  }
   res.redirect('/lobby');
 });
 
