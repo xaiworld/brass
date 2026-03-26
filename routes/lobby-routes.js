@@ -255,6 +255,13 @@ router.post('/games/:id/start', requireLogin, (req, res) => {
   const botModule = require('../lib/bot-engine');
   botModule.checkAndPlayBot(gameId);
 
+  // Notify all human players game started
+  try {
+    const { notifyGameStarted } = require('../lib/notifications');
+    const humanIds = players.filter(p => !p.isBot).map(p => p.userId);
+    notifyGameStarted(gameId, game.name, humanIds);
+  } catch (e) { /* notifications optional */ }
+
   res.redirect(`/games/${gameId}`);
 });
 

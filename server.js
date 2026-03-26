@@ -51,6 +51,17 @@ app.use('/', profileRoutes);
 app.use('/', accountRoutes);
 app.use('/wiki', wikiRoutes);
 
+// Push notification subscription API
+const { VAPID_PUBLIC } = require('./lib/notifications');
+app.get('/api/push/vapid-key', (req, res) => res.json({ key: VAPID_PUBLIC }));
+app.post('/api/push/subscribe', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'Not logged in' });
+  const { subscription } = req.body;
+  if (!subscription) return res.status(400).json({ error: 'Missing subscription' });
+  db.addPushSubscription(req.session.user.id, JSON.stringify(subscription));
+  res.json({ ok: true });
+});
+
 // Home redirect
 app.get('/', (req, res) => {
   if (req.session.user) {

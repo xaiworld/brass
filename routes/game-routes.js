@@ -107,6 +107,26 @@ router.post('/api/games/:id/action', requireLoginAPI, (req, res) => {
   if (result.newState.phase === 'finished') {
     db.updateGame(gameId, { status: 'finished' });
     recordGameResult(gameId, result.newState);
+    // Notify all human players game finished
+    try {
+      const { notifyGameFinished } = require('../lib/notifications');
+      const game = db.findGame(gameId);
+      const winner = result.newState.players.reduce((best, p) => p.vp > best.vp ? p : best, result.newState.players[0]);
+      const humanIds = result.newState.players.filter(p => !p.isBot).map(p => p.userId);
+      notifyGameFinished(gameId, game ? game.name : 'Game', humanIds, winner.username);
+    } catch (e) { /* notifications optional */ }
+  } else {
+    // Notify next human player it's their turn
+    try {
+      const { notifyYourTurn } = require('../lib/notifications');
+      const ns = result.newState;
+      const nextSeat = ns.turnOrder[ns.currentPlayerIndex];
+      const nextPlayer = ns.players[nextSeat];
+      if (nextPlayer && !nextPlayer.isBot) {
+        const game = db.findGame(gameId);
+        notifyYourTurn(gameId, game ? game.name : 'Game', nextPlayer.userId, nextPlayer.username);
+      }
+    } catch (e) { /* notifications optional */ }
   }
 
   // Check if next player is a bot

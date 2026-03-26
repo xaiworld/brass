@@ -255,6 +255,30 @@
       document.body.classList.add('is-mobile');
     }
 
+    // Register push notifications
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.register('/sw.js').then(function(reg) {
+        // Check if already subscribed
+        reg.pushManager.getSubscription().then(function(sub) {
+          if (sub) return; // Already subscribed
+          // Get VAPID key and subscribe
+          fetch('/api/push/vapid-key').then(r => r.json()).then(function(data) {
+            const key = Uint8Array.from(atob(data.key.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+            reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: key
+            }).then(function(subscription) {
+              fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subscription: subscription.toJSON() })
+              });
+            }).catch(function(e) { console.log('Push subscribe failed:', e); });
+          });
+        });
+      }).catch(function(e) { console.log('SW registration failed:', e); });
+    }
+
     function lobbyFilter(filter) {
       document.querySelectorAll('.lobby-filter-btn').forEach(btn => {
         btn.classList.toggle('active', btn.textContent.toLowerCase().startsWith(filter));
