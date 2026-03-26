@@ -199,7 +199,12 @@
 
       init() {
         if (this.isMobile) {
-          // Keep floating hand visible on board tab (re-style for mobile)
+          // Force floating hand visible on mobile (always detached)
+          if (typeof GameUI !== 'undefined') {
+            GameUI.handDetached = true;
+          }
+          const fh = document.getElementById('floating-hand');
+          if (fh) fh.style.display = 'block';
           // Hide desktop log (use Log tab instead)
           const lw = document.getElementById('log-wrapper');
           if (lw) lw.style.display = 'none';
@@ -218,7 +223,7 @@
 
         // Show/hide floating hand based on tab
         const fh = document.getElementById('floating-hand');
-        if (fh) fh.style.display = (tab === 'board') ? '' : 'none';
+        if (fh) fh.style.display = (tab === 'board') ? 'block' : 'none';
 
         // Show/hide board
         const bc = document.getElementById('board-container');
