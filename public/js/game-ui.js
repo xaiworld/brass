@@ -56,6 +56,8 @@ const GameUI = {
 
   sizeFloatingCards() {
     if (this._sizingCards) return;
+    // On mobile, skip JS sizing — let CSS handle scroll
+    if (document.body.classList.contains('is-mobile')) return;
     this._sizingCards = true;
 
     const container = document.getElementById('floating-hand-cards');

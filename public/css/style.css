@@ -799,7 +799,9 @@ body.is-mobile .floating-hand-cards {
 }
 body.is-mobile .floating-hand-cards .card {
   min-width: 55px !important;
+  width: auto !important;
   flex-shrink: 0 !important;
+  aspect-ratio: 1 / 1.618 !important;
 }
 
 /* Log: above tab bar */
