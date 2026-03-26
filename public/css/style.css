@@ -787,7 +787,13 @@ body.is-mobile .floating-hand {
   z-index: 40;
   border-top: 1px solid #444;
 }
-body.is-mobile .floating-hand-cards .card { min-width: 36px; }
+body.is-mobile .floating-hand-cards {
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+body.is-mobile .floating-hand-cards .card { min-width: 50px; flex-shrink: 0; }
 
 /* Log: above tab bar */
 body.is-mobile .log-wrapper {
