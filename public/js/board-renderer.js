@@ -324,15 +324,15 @@ const BoardRenderer = {
     incomePanel:     { x: 30,  y: 220 }
   },
 
-  // Mobile layout: panels in map corners
+  // Mobile layout: panels inside map corners (within 600×520 viewBox)
   MARKET_MOBILE: {
-    vpPanel:         { x: 30,  y: 20 },    // top-left
-    turnOrderPanel:  { x: 573, y: 20 },    // top-right
-    moneySpentPanel: { x: 573, y: 110 },   // just under turn order
-    coalPanel:       { x: 20,  y: 85 },
-    ironPanel:       { x: 48,  y: 85 },
-    incomePanel:     { x: 30,  y: 360 },   // bottom-left
-    demandPanel:     { x: 573, y: 360 }    // bottom-right
+    vpPanel:         { x: 35,  y: 25 },    // top-left
+    turnOrderPanel:  { x: 555, y: 25 },    // top-right
+    moneySpentPanel: { x: 555, y: 120 },   // just under turn order
+    coalPanel:       { x: 25,  y: 90 },
+    ironPanel:       { x: 53,  y: 90 },
+    incomePanel:     { x: 35,  y: 340 },   // bottom-left
+    demandPanel:     { x: 555, y: 340 }    // bottom-right
   },
 
   // Working copy (may be mutated during drag, restored on undo)
@@ -344,6 +344,10 @@ const BoardRenderer = {
   },
 
   getMarketPos(id) {
+    // On mobile, always use mobile defaults (ignore user custom positions for panels)
+    if (document.body.classList.contains('is-mobile') && this.MARKET_MOBILE[id]) {
+      return this.MARKET_MOBILE[id];
+    }
     if (this.customPositions[id]) return this.customPositions[id];
     if (this.marketDefaults[id]) return this.marketDefaults[id];
     if (this.MARKET_FACTORY[id]) return this.MARKET_FACTORY[id];

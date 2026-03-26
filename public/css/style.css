@@ -787,13 +787,20 @@ body.is-mobile .floating-hand {
   z-index: 40;
   border-top: 1px solid #444;
 }
-body.is-mobile .floating-hand-cards {
-  overflow-x: auto;
-  overflow-y: hidden;
-  flex-wrap: nowrap;
-  -webkit-overflow-scrolling: touch;
+body.is-mobile .floating-hand {
+  overflow: visible !important;
 }
-body.is-mobile .floating-hand-cards .card { min-width: 50px; flex-shrink: 0; }
+body.is-mobile .floating-hand-cards {
+  overflow-x: scroll !important;
+  overflow-y: hidden !important;
+  flex-wrap: nowrap !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+body.is-mobile .floating-hand-cards .card {
+  min-width: 55px !important;
+  flex-shrink: 0 !important;
+}
 
 /* Log: above tab bar */
 body.is-mobile .log-wrapper {
