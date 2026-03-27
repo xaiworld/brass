@@ -89,6 +89,13 @@ Located in `training/` directory (Python + PyTorch):
 - Mobile UX is important (friends play on phones)
 - nodemon.json ignores data/ directory to prevent restart loops
 
+## Session Memory
+Persisted memory files are in `.claude-memory/` in the repo root. Read these at the start of a new session for user preferences, workflow style, and project status:
+- `.claude-memory/MEMORY.md` — Index
+- `.claude-memory/user_xai.md` — User profile and preferences
+- `.claude-memory/feedback_workflow.md` — How to work with this user
+- `.claude-memory/project_alphazero_bots.md` — Bot training status and next steps
+
 ## Development Notes
 - `npm start` or `node server.js` to run locally on port 3000
 - Training: `python3 -u training/train_v3.py` (runs ~5 hours for 500 iterations)
