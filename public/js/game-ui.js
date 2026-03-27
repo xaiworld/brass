@@ -299,8 +299,11 @@ const GameUI = {
   _realState: null,
 
   showHistoryState(histState) {
+    // Only save the real state the FIRST time we enter history mode
+    if (!this.isViewingHistory) {
+      this._realState = gameState;
+    }
     this.isViewingHistory = true;
-    this._realState = gameState;
     gameState = histState; // keep historical state active for hover/render
     this.updateNavLabel();
     this.updateGameInfo();
