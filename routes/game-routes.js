@@ -304,8 +304,25 @@ router.post('/api/games/:id/admin-fix', requireLoginAPI, (req, res) => {
     }
   }
 
-  // Log the fix
-  state.log.push({ msg: '🔧 Admin fix applied by xai', ts: new Date().toISOString() });
+  // Log the fix with details
+  const details = [];
+  if (fixes.player !== undefined) {
+    const pName = state.players[fixes.player]?.username || 'P' + fixes.player;
+    if (fixes.money !== undefined) details.push(pName + ' money→£' + fixes.money);
+    if (fixes.income !== undefined) details.push(pName + ' income→sq' + fixes.income);
+    if (fixes.vp !== undefined) details.push(pName + ' VP→' + fixes.vp);
+    if (fixes.spent !== undefined) details.push(pName + ' spent→£' + fixes.spent);
+  }
+  if (fixes.coalMarket !== undefined) details.push('coal market→' + fixes.coalMarket);
+  if (fixes.ironMarket !== undefined) details.push('iron market→' + fixes.ironMarket);
+  if (fixes.distantMarketDemand !== undefined) details.push('demand→' + fixes.distantMarketDemand);
+  if (fixes.currentPlayerIndex !== undefined) details.push('turn→player idx ' + fixes.currentPlayerIndex);
+  if (fixes.actionsRemaining !== undefined) details.push('actions→' + fixes.actionsRemaining);
+  if (fixes.era !== undefined) details.push('era→' + fixes.era);
+  if (fixes.round !== undefined) details.push('round→' + fixes.round);
+  if (fixes.slot) details.push('slot ' + fixes.slot.location + '[' + fixes.slot.index + '] modified');
+  if (fixes.link) details.push('link ' + fixes.link.id + ' modified');
+  state.log.push({ msg: '🔧 Admin fix: ' + (details.join(', ') || 'unknown'), ts: new Date().toISOString() });
 
   const success = db.updateGameState(gameId, JSON.stringify(state), gs.version);
   if (!success) return res.status(409).json({ error: 'Concurrent modification' });

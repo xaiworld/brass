@@ -115,6 +115,45 @@
 - **Income in mat**: Numbers without + sign, cubes cost shown per level
 - **Reset training**: Admin button to clear all training data
 
+### DRL Bot Rewrite & Training (v0.0.133 - v0.0.136)
+- **ValidActionGenerator**: Enumerates only valid moves (0 errors per game)
+- **33 features per action**: Type, money, income, VP, network, era, tile stats
+- **6 bot personalities**: Explorer Eve (ε=0.8) to Master Max (ε=0.01)
+- **Full training pipeline**: Phase 1 (1000 games, rank 6 personalities) → Phase 2 (1000 games/tier with clones)
+- **Tier-based bot selection**: Pro/Average/Noob dropdown when adding bots
+
+### Industry Icons & 2-Player Mode (v0.0.137 - v0.0.138)
+- **Industry icon images**: Compressed tile art from physical game on board slots
+- **Built slots**: Player color background with industry image overlay + level badge
+- **Empty slots**: Dimmed icons on warm beige background
+- **2-player mode**: Removed 6 locations, reduced deck/markets/demand, Lancaster-Scotland canal, dedicated 2P map
+- **Improved bot features**: 44 features including sell opportunities, port connectivity, era survival
+
+### Mobile UI (v0.0.139 - v0.0.142)
+- **Mobile detection**: User-agent + touch + width ≤ 768px
+- **Bottom tab bar**: Info, Board, Hand, Actions, Log
+- **Live DOM panels**: Real panels moved to overlays (not cloned), instant updates
+- **Floating hand**: Always visible on Board tab, horizontal scroll, touch-friendly
+- **Turn navigator**: Fixed bar between hand and tabs, always visible
+- **Mobile market panels**: VP top-left, Turn Order top-right, Income bottom-left, Demand bottom-right
+- **Touch-friendly**: Enlarged buttons, fonts, tap targets throughout
+
+### Neural Network Bot (v0.0.141 - v0.0.145)
+- **AlphaZero-inspired**: Python + PyTorch training, JS inference
+- **BrassNetV2**: 2.4M params, 3 residual blocks, 512-dim hidden
+- **State encoding**: 1145 features (board, links, players, hand, strategy)
+- **Self-play training**: v1 (100 iters, MaxVP=60.6) → v2 (500 iters, 67.8) → v3 (500 more, 73.3)
+- **Reward shaping**: Normalized VP + win + absolute VP + flips + links + income
+- **Pro/Average/Noob**: Same network, different temperatures (0.05/0.4/1.0)
+
+### Notifications & Admin (v0.0.143 - v0.0.147)
+- **Web Push Notifications**: Turn, game start, game finish, game invite (VAPID-based)
+- **Service worker**: Push display with click-to-open game
+- **Lobby improvements**: Collapsible game sections (Active/Waiting/Finished), filter tabs, current turn indicator
+- **Turn indicator bar**: Colored bar at top of game page showing whose turn + era/round
+- **Market sell fix**: Cubes now fill expensive slots first (£4,4,3,3 not £1,1,2,2)
+- **Admin fix mode**: xai can edit player money/income/VP, markets, turn state in-game
+
 ---
 
-*Built iteratively through 112 versions of user-driven development, from a blank repository to a full multiplayer board game with AI opponents, training framework, and comprehensive game state management.*
+*Built iteratively through 147 versions of user-driven development, from a blank repository to a full multiplayer board game with neural network AI, mobile UI, push notifications, and comprehensive game state management.*
