@@ -29,10 +29,20 @@ router.get('/lobby', requireLogin, (req, res) => {
     const gs = db.getGameState(g.id);
     let gameAppVersion = null;
     let compatible = true;
+    let currentTurnName = null;
+    let currentTurnColor = null;
     if (gs) {
       const state = JSON.parse(gs.state);
       gameAppVersion = state.appVersion || null;
       compatible = isCompatible(state.gameStateVersion || 0);
+      if (state.phase === 'actions' && state.turnOrder && state.players) {
+        const seat = state.turnOrder[state.currentPlayerIndex];
+        const cp = state.players[seat];
+        if (cp) {
+          currentTurnName = cp.username;
+          currentTurnColor = cp.color;
+        }
+      }
     }
     const isMember = db.isGameMember(g.id, userId);
     const isInvited = !isMember && invitedGameIds.includes(g.id);
@@ -52,7 +62,9 @@ router.get('/lobby', requireLogin, (req, res) => {
       invited_names: invitedNames,
       creator_name: creator ? creator.username : 'Unknown',
       gameAppVersion,
-      compatible
+      compatible,
+      currentTurnName,
+      currentTurnColor
     };
   }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 

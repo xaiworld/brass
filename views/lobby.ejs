@@ -107,9 +107,12 @@
                         <span class="badge badge-version<%= game.compatible ? '' : ' badge-incompatible' %>">v<%= game.gameAppVersion %></span>
                       <% } %>
                     </div>
-                    <div style="font-size:10px;margin-top:2px;display:flex;gap:6px;flex-wrap:wrap">
+                    <div style="font-size:10px;margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
                       <% for (const p of game.player_names) { %>
-                        <span style="color:<%= p.isBot ? 'var(--text-muted)' : '#fff' %>"><%= p.name %><%= p.isBot ? ' (Bot)' : '' %></span>
+                        <span style="color:<%= p.isBot ? 'var(--text-muted)' : '#fff' %><%= game.currentTurnName === p.name ? ';font-weight:bold' : '' %>"><%= game.currentTurnName === p.name ? '▸ ' : '' %><%= p.name %><%= p.isBot ? ' (Bot)' : '' %></span>
+                      <% } %>
+                      <% if (game.currentTurnName && game.status === 'active') { %>
+                        <span style="font-size:9px;color:var(--gold)">— <%= game.currentTurnName %>'s turn</span>
                       <% } %>
                     </div>
                     <div class="game-actions">

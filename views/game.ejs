@@ -18,6 +18,9 @@
   </nav>
 
   <div class="game-container">
+    <!-- Current turn indicator bar -->
+    <div class="turn-indicator-bar" id="turn-indicator-bar"></div>
+
     <div class="game-main">
       <!-- Left panel: game info + players (collapsible) -->
       <div class="left-panel" id="left-panel">
@@ -200,15 +203,17 @@
 
       init() {
         if (this.isMobile) {
-          // Force floating hand visible on mobile (always detached)
+          // Force floating hand visible on mobile
           if (typeof GameUI !== 'undefined') {
             GameUI.handDetached = true;
           }
           const fh = document.getElementById('floating-hand');
           if (fh) fh.style.display = 'block';
-          // Hide desktop log (use Log tab instead)
-          const lw = document.getElementById('log-wrapper');
-          if (lw) lw.style.display = 'none';
+          // Hide desktop log toggle (panel itself moves to mobile overlay)
+          const logToggle = document.querySelector('.log-toggle');
+          if (logToggle) logToggle.style.display = 'none';
+          // Move real DOM panels into mobile overlays (live updates!)
+          this.movePanelsToMobile();
         }
       },
 
@@ -239,89 +244,59 @@
         }
       },
 
-      populatePanel(tab) {
-        if (tab === 'hand') {
-          const target = document.getElementById('mobile-hand-content');
-          if (!target) return;
-          target.innerHTML = '';
-          const handPanel = document.getElementById('hand-panel');
-          const matPanel = document.getElementById('mat-panel');
-          if (handPanel) {
-            const handClone = handPanel.cloneNode(true);
-            handClone.id = '';
-            target.appendChild(handClone);
-          }
-          if (matPanel) {
-            const hr = document.createElement('hr');
-            hr.style.cssText = 'border-color:#333;margin:12px 0';
-            target.appendChild(hr);
-            const matClone = matPanel.cloneNode(true);
-            matClone.id = '';
-            target.appendChild(matClone);
-          }
-          // Re-bind all interactive elements in cloned content
-          this.rebindHandlers(target);
-        } else if (tab === 'actions') {
-          const target = document.getElementById('mobile-actions-content');
-          const actionPanel = document.getElementById('action-panel');
-          if (target && actionPanel) {
-            target.innerHTML = '';
-            const clone = actionPanel.cloneNode(true);
-            clone.id = '';
-            target.appendChild(clone);
-            this.rebindHandlers(target);
-          }
-        } else if (tab === 'info') {
-          const target = document.getElementById('mobile-info-content');
-          if (!target) return;
-          target.innerHTML = '';
-          for (const srcId of ['game-info', 'player-bar', 'turn-nav']) {
-            const src = document.getElementById(srcId);
-            if (src) {
-              const clone = src.cloneNode(true);
-              clone.id = '';
-              target.appendChild(clone);
-            }
-          }
-        } else if (tab === 'log') {
-          const target = document.getElementById('mobile-log-content');
-          const logPanel = document.getElementById('log-panel');
-          if (target && logPanel) {
-            target.innerHTML = logPanel.innerHTML;
-            target.scrollTop = target.scrollHeight;
-          }
+      // Move actual DOM panels into mobile overlays (live, not cloned)
+      _panelsMoved: false,
+
+      movePanelsToMobile() {
+        if (this._panelsMoved) return;
+        this._panelsMoved = true;
+
+        // Move action panel
+        const actionPanel = document.getElementById('action-panel');
+        const mobileActions = document.getElementById('mobile-actions-content');
+        if (actionPanel && mobileActions) mobileActions.appendChild(actionPanel);
+
+        // Move hand + mat panels
+        const handPanel = document.getElementById('hand-panel');
+        const matPanel = document.getElementById('mat-panel');
+        const mobileHand = document.getElementById('mobile-hand-content');
+        if (mobileHand && handPanel) mobileHand.appendChild(handPanel);
+        if (mobileHand && matPanel) {
+          const hr = document.createElement('hr');
+          hr.style.cssText = 'border-color:#333;margin:12px 0';
+          mobileHand.appendChild(hr);
+          mobileHand.appendChild(matPanel);
+        }
+
+        // Move game info + player bar + turn nav
+        const mobileInfo = document.getElementById('mobile-info-content');
+        for (const srcId of ['game-info', 'player-bar', 'turn-nav']) {
+          const src = document.getElementById(srcId);
+          if (src && mobileInfo) mobileInfo.appendChild(src);
+        }
+
+        // Move log panel and ensure it's visible
+        const logPanel = document.getElementById('log-panel');
+        const mobileLog = document.getElementById('mobile-log-content');
+        if (logPanel && mobileLog) {
+          logPanel.style.height = 'auto';
+          logPanel.style.maxHeight = '100%';
+          logPanel.style.overflow = 'auto';
+          logPanel.style.padding = '4px 0';
+          mobileLog.appendChild(logPanel);
         }
       },
 
-      rebindHandlers(container) {
-        // Re-bind onclick attributes that were lost during cloneNode
-        container.querySelectorAll('[onclick]').forEach(el => {
-          const code = el.getAttribute('onclick');
-          el.removeAttribute('onclick');
-          el.addEventListener('click', function(e) {
-            e.stopPropagation();
-            try { eval(code); } catch(err) { console.log('[Mobile] handler error:', err); }
-          });
-        });
-        container.querySelectorAll('[onchange]').forEach(el => {
-          const code = el.getAttribute('onchange');
-          el.removeAttribute('onchange');
-          el.addEventListener('change', function(e) {
-            try { eval(code); } catch(err) { console.log('[Mobile] handler error:', err); }
-            // Re-populate panel after state change
-            setTimeout(() => MobileUI.populatePanel(MobileUI.currentTab), 100);
-          });
-        });
-        // Card clicks -> select + switch to actions
-        container.querySelectorAll('.card').forEach(card => {
-          card.addEventListener('click', function() {
-            const cardId = this.getAttribute('data-card-id');
-            if (cardId && typeof GameUI !== 'undefined') {
-              GameUI.selectCard(cardId);
-              MobileUI.showTab('actions');
-            }
-          });
-        });
+      populatePanel(tab) {
+        // Panels are already moved — just scroll log to bottom
+        if (tab === 'log') {
+          const logPanel = document.getElementById('log-panel');
+          if (logPanel) logPanel.scrollTop = logPanel.scrollHeight;
+        }
+      },
+
+      refreshCurrentPanel() {
+        // No-op now since panels are live DOM, not clones
       }
     };
     MobileUI.init();

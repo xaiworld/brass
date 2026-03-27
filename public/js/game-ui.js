@@ -307,9 +307,35 @@ const GameUI = {
     this.updatePlayerBar();
     this.updateLog();
     this.updateActionPanel();
+    this.updateTurnIndicator();
     BoardRenderer.render();
     // Don't restore — keep histState as gameState while viewing history
     // It gets restored in navLive() or updateAll()
+  },
+
+  updateTurnIndicator() {
+    const bar = document.getElementById('turn-indicator-bar');
+    if (!bar) return;
+    const s = gameState;
+    if (s.phase === 'finished') {
+      const winner = s.players.reduce((best, p) => p.vp > best.vp ? p : best, s.players[0]);
+      const color = BOARD.playerColors[winner.seat] || '#888';
+      bar.style.background = color + '44';
+      bar.style.borderColor = color;
+      bar.innerHTML = '&#127942; ' + winner.username + ' wins with ' + winner.vp + ' VP!';
+      return;
+    }
+    if (s.phase !== 'actions') return;
+    const seat = s.turnOrder[s.currentPlayerIndex];
+    const cp = s.players[seat];
+    if (!cp) return;
+    const color = BOARD.playerColors[seat] || '#888';
+    const isMe = cp.userId === USER_ID;
+    bar.style.background = color + (isMe ? '55' : '22');
+    bar.style.borderColor = color;
+    bar.innerHTML = (isMe ? '&#9889; Your turn' : '&#9203; ' + cp.username + '\'s turn')
+      + ' &mdash; ' + s.era + ' era, round ' + s.round
+      + ' (' + s.actionsRemaining + ' action' + (s.actionsRemaining > 1 ? 's' : '') + ')';
   },
 
   updateNavLabel() {
@@ -386,6 +412,7 @@ const GameUI = {
     this.updateLog();
     this.checkBotAnnouncement();
     this.updateNavLabel();
+    this.updateTurnIndicator();
     BoardRenderer.render();
   },
 
@@ -1281,6 +1308,10 @@ const GameUI = {
     this.selectedCard = cardId;
     this.updateHand();
     this.updateActionPanel();
+    // On mobile, refresh the visible overlay panels
+    if (typeof MobileUI !== 'undefined' && MobileUI.isMobile) {
+      MobileUI.refreshCurrentPanel();
+    }
   },
 
   onCardHover(cardId, event) {
@@ -1428,6 +1459,7 @@ const GameUI = {
       : (INDUSTRIES[info.industry]?.name || info.industry);
     const isSelected = this.selectedCard === cardId;
     return '<div class="card ' + info.type + (isSelected ? ' selected' : '') + '"'
+      + ' data-card-id="' + cardId + '"'
       + ' onclick="GameUI.selectCard(\'' + cardId + '\')"'
       + ' onmouseenter="GameUI.onCardHover(\'' + cardId + '\', event)"'
       + ' onmouseleave="GameUI.onCardLeave()">'

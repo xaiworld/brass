@@ -161,6 +161,20 @@ a:hover { text-decoration: underline; }
 .game-container { display: flex; flex-direction: column; height: calc(100vh - 45px); }
 .game-main { display: flex; flex: 1; overflow: hidden; position: relative; }
 
+/* Turn indicator bar */
+.turn-indicator-bar {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  background: var(--surface);
+  border-bottom: 2px solid;
+  transition: background 0.3s, border-color 0.3s;
+}
+
 /* Left panel: game info + players (collapsible) */
 .left-panel {
   display: flex;
