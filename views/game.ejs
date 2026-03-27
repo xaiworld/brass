@@ -13,6 +13,7 @@
       <a href="/lobby" class="nav-link">Lobby</a>
       <a href="/wiki" target="_blank" class="nav-link">Wiki</a>
       <span class="badge badge-version">v<%= appVersion %></span>
+      <% if (user.username === 'xai') { %><button class="btn btn-sm" style="background:#5a1a1a;color:var(--accent);font-size:10px" onclick="AdminFix.open()">Fix</button><% } %>
       <a href="/account" class="nav-user"><%= user.username %></a>
     </div>
   </nav>
@@ -98,6 +99,19 @@
       </div>
       <div class="floating-hand-cards" id="floating-hand-cards"></div>
     </div>
+
+    <% if (user.username === 'xai') { %>
+    <!-- Admin Fix Panel -->
+    <div id="admin-fix-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+      background:var(--bg);border:2px solid var(--accent);border-radius:8px;padding:16px;z-index:100;
+      min-width:320px;max-height:80vh;overflow-y:auto;font-size:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h3 style="color:var(--accent);margin:0">Admin Fix Mode</h3>
+        <button class="btn btn-sm" onclick="document.getElementById('admin-fix-panel').style.display='none'">Close</button>
+      </div>
+      <div id="admin-fix-content"></div>
+    </div>
+    <% } %>
 
     <!-- Collapsible log -->
     <div class="log-wrapper collapsed" id="log-wrapper">
@@ -301,5 +315,70 @@
     };
     MobileUI.init();
   </script>
+  <% if (user.username === 'xai') { %>
+  <script>
+    const AdminFix = {
+      open() {
+        const panel = document.getElementById('admin-fix-panel');
+        panel.style.display = 'block';
+        this.render();
+      },
+      render() {
+        const s = gameState;
+        const content = document.getElementById('admin-fix-content');
+        let html = '';
+
+        // Players
+        html += '<h4 style="color:var(--gold);margin:8px 0 4px">Players</h4>';
+        for (let i = 0; i < s.players.length; i++) {
+          const p = s.players[i];
+          const color = BOARD.playerColors[p.seat] || '#888';
+          html += '<div style="border-left:3px solid ' + color + ';padding:4px 8px;margin:4px 0;background:var(--surface);border-radius:3px">';
+          html += '<strong style="color:' + color + '">' + p.username + '</strong> (seat ' + p.seat + ')<br>';
+          html += '<label>Money: <input type="number" value="' + p.money + '" style="width:60px" onchange="AdminFix.fix({player:' + i + ',money:this.value})"></label> ';
+          html += '<label>Income sq: <input type="number" value="' + p.income + '" style="width:50px" onchange="AdminFix.fix({player:' + i + ',income:this.value})"></label> ';
+          html += '<label>VP: <input type="number" value="' + p.vp + '" style="width:50px" onchange="AdminFix.fix({player:' + i + ',vp:this.value})"></label> ';
+          html += '<label>Spent: <input type="number" value="' + (p.spentThisRound||0) + '" style="width:50px" onchange="AdminFix.fix({player:' + i + ',spent:this.value})"></label>';
+          html += '</div>';
+        }
+
+        // Markets
+        html += '<h4 style="color:var(--gold);margin:8px 0 4px">Markets</h4>';
+        html += '<label>Coal: <input type="number" value="' + s.coalMarket + '" style="width:50px" onchange="AdminFix.fix({coalMarket:this.value})"></label> ';
+        html += '<label>Iron: <input type="number" value="' + s.ironMarket + '" style="width:50px" onchange="AdminFix.fix({ironMarket:this.value})"></label> ';
+        html += '<label>Demand: <input type="number" value="' + s.distantMarketDemand + '" style="width:50px" onchange="AdminFix.fix({distantMarketDemand:this.value})"></label>';
+
+        // Turn
+        html += '<h4 style="color:var(--gold);margin:8px 0 4px">Turn</h4>';
+        html += '<label>Current player idx: <input type="number" value="' + s.currentPlayerIndex + '" style="width:40px" onchange="AdminFix.fix({currentPlayerIndex:this.value})"></label> ';
+        html += '<label>Actions left: <input type="number" value="' + s.actionsRemaining + '" style="width:40px" onchange="AdminFix.fix({actionsRemaining:this.value})"></label> ';
+        html += '<label>Era: <select onchange="AdminFix.fix({era:this.value})"><option' + (s.era==='canal'?' selected':'') + '>canal</option><option' + (s.era==='rail'?' selected':'') + '>rail</option></select></label> ';
+        html += '<label>Round: <input type="number" value="' + s.round + '" style="width:40px" onchange="AdminFix.fix({round:this.value})"></label>';
+
+        html += '<p class="muted" style="margin-top:8px">Changes apply immediately. Game log will show "Admin fix applied".</p>';
+        content.innerHTML = html;
+      },
+      async fix(data) {
+        try {
+          const r = await fetch('/api/games/' + GAME_ID + '/admin-fix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          const result = await r.json();
+          if (result.ok) {
+            gameState = result.state;
+            GameUI.updateAll();
+            this.render(); // refresh fix panel with new values
+          } else {
+            alert('Fix failed: ' + (result.error || 'unknown'));
+          }
+        } catch (e) {
+          alert('Fix error: ' + e.message);
+        }
+      }
+    };
+  </script>
+  <% } %>
 </body>
 </html>

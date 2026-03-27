@@ -240,4 +240,77 @@ function recordGameResult(gameId, state) {
   db.addGameResult(result);
 }
 
+// ============ ADMIN FIX MODE (xai only) ============
+
+router.get('/api/games/:id/admin-state', requireLoginAPI, (req, res) => {
+  if (req.session.user.username !== 'xai') return res.status(403).json({ error: 'Admin only' });
+  const gs = db.getGameState(parseInt(req.params.id));
+  if (!gs) return res.status(404).json({ error: 'Game not found' });
+  res.json({ state: JSON.parse(gs.state), version: gs.version });
+});
+
+router.post('/api/games/:id/admin-fix', requireLoginAPI, (req, res) => {
+  if (req.session.user.username !== 'xai') return res.status(403).json({ error: 'Admin only' });
+  const gameId = parseInt(req.params.id);
+  const gs = db.getGameState(gameId);
+  if (!gs) return res.status(404).json({ error: 'Game not found' });
+
+  const state = JSON.parse(gs.state);
+  const fixes = req.body;
+
+  // Apply fixes
+  if (fixes.player !== undefined && fixes.player !== null) {
+    const pIdx = fixes.player;
+    const p = state.players[pIdx];
+    if (!p) return res.status(400).json({ error: 'Invalid player index' });
+
+    if (fixes.money !== undefined) p.money = parseInt(fixes.money);
+    if (fixes.income !== undefined) p.income = parseInt(fixes.income);
+    if (fixes.vp !== undefined) p.vp = parseInt(fixes.vp);
+    if (fixes.spent !== undefined) p.spentThisRound = parseInt(fixes.spent);
+  }
+
+  // Market fixes
+  if (fixes.coalMarket !== undefined) state.coalMarket = parseInt(fixes.coalMarket);
+  if (fixes.ironMarket !== undefined) state.ironMarket = parseInt(fixes.ironMarket);
+  if (fixes.distantMarketDemand !== undefined) state.distantMarketDemand = parseInt(fixes.distantMarketDemand);
+
+  // Turn fixes
+  if (fixes.currentPlayerIndex !== undefined) state.currentPlayerIndex = parseInt(fixes.currentPlayerIndex);
+  if (fixes.actionsRemaining !== undefined) state.actionsRemaining = parseInt(fixes.actionsRemaining);
+  if (fixes.era !== undefined) state.era = fixes.era;
+  if (fixes.round !== undefined) state.round = parseInt(fixes.round);
+  if (fixes.phase !== undefined) state.phase = fixes.phase;
+
+  // Slot fixes: { slot: { location, index, owner, industryType, level, flipped, resources } }
+  if (fixes.slot) {
+    const loc = state.board.locations[fixes.slot.location];
+    if (loc && loc.slots[fixes.slot.index]) {
+      const s = loc.slots[fixes.slot.index];
+      if (fixes.slot.owner !== undefined) s.owner = fixes.slot.owner;
+      if (fixes.slot.industryType !== undefined) s.industryType = fixes.slot.industryType;
+      if (fixes.slot.level !== undefined) s.level = fixes.slot.level;
+      if (fixes.slot.flipped !== undefined) s.flipped = fixes.slot.flipped;
+      if (fixes.slot.resources !== undefined) s.resources = parseInt(fixes.slot.resources);
+    }
+  }
+
+  // Link fixes: { link: { id, owner, type } }
+  if (fixes.link) {
+    const l = state.board.links[fixes.link.id];
+    if (l) {
+      if (fixes.link.owner !== undefined) l.owner = fixes.link.owner;
+      if (fixes.link.type !== undefined) l.type = fixes.link.type;
+    }
+  }
+
+  // Log the fix
+  state.log.push({ msg: '🔧 Admin fix applied by xai', ts: new Date().toISOString() });
+
+  const success = db.updateGameState(gameId, JSON.stringify(state), gs.version);
+  if (!success) return res.status(409).json({ error: 'Concurrent modification' });
+
+  res.json({ ok: true, state });
+});
+
 module.exports = router;
