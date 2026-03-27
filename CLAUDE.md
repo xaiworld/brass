@@ -71,15 +71,21 @@ Located in `training/` directory (Python + PyTorch):
 ### Training Status
 - v1: 100 iterations, MaxVP=60.6 (basic network, 463K params)
 - v2: 500 iterations, MaxVP=67.8 (residual blocks, 2.4M params)
-- v3: IN PROGRESS — 500 iterations resuming from v2, reward shaping, MaxVP=69.5 so far
-- Checkpoints saved in `training/checkpoint_v3_*.pt`
-- Weights exported to `lib/nn-weights.json` for Node.js inference
+- v3: COMPLETE — 500 iters from v2, reward shaping, best MaxVP=73.3
+- v4: IN PROGRESS — true self-play (all 3 players = same network), 500 iters from v3 checkpoint
+  - Check: `tail -5 /private/tmp/claude-501/-Users-xai-brass/fb9c4340-1128-4023-b594-8211320236dc/tasks/b5wkgocpk.output`
+  - NOTE: v4 was started BEFORE the market sell price fix — retrain after it finishes
+- Deployed weights: v3 best (MaxVP=73.3) in `lib/nn-weights.json`
+- Checkpoints saved in `training/checkpoint_v*.pt`
 
 ### Key Training Issues to Fix
-1. Python game engine produces lower VPs than Node.js engine — subtle rule differences
-2. MCTS is broken (returns VP=3) — action application on copies fails
-3. Too few sells generated — connectivity/selling mechanics need debugging
-4. Need more training iterations and potentially curriculum learning
+1. Market sell price was FIXED in v0.0.146 — cubes now fill expensive slots first
+   - Python engine also fixed in training/game_engine.py
+   - Need to retrain with correct economics (after v4 finishes)
+2. MCTS implementation broken (returns VP=3) — needs debugging
+3. Too few sells in Python engine — connectivity mechanics may differ from Node.js
+4. True self-play (v4) should help: good opponents build ports/links, enabling more sells
+5. Consider comparing Python vs Node.js engine outputs for same seed to find rule diffs
 
 ## User Preferences
 - User "xai" is the admin account
@@ -96,8 +102,17 @@ Persisted memory files are in `.claude-memory/` in the repo root. Read these at 
 - `.claude-memory/feedback_workflow.md` — How to work with this user
 - `.claude-memory/project_alphazero_bots.md` — Bot training status and next steps
 
+## Recent Fixes (this session)
+- **Market sell price** (v0.0.146): Was filling cheapest slots first, now fills expensive first
+- **History navigation** (latest): Browsing multiple history states no longer loses live state
+- **Admin fix mode** (v0.0.147): xai can edit game state in-game (Fix button in navbar)
+- **Mobile panels**: Live DOM (not cloned), floating hand horizontal scroll, turn nav always visible
+- **Web Push Notifications**: Turn, start, finish, invite notifications
+- **2-player mode**: Full implementation with reduced board/deck/markets
+
 ## Development Notes
 - `npm start` or `node server.js` to run locally on port 3000
-- Training: `python3 -u training/train_v3.py` (runs ~5 hours for 500 iterations)
-- Weights export: training scripts save to `training/best_v3.json`, copy to `lib/nn-weights.json`
-- Version bump in `lib/version.js` before each push
+- Current APP_VERSION: 0.0.147 (bump in lib/version.js before each push)
+- Training v4 running: `python3 -u training/train_v4.py` (true self-play, ~5 hours)
+- To deploy new weights: run training, then `python3 -c "..."` to compact best_v4.json → lib/nn-weights.json
+- After v4 finishes, retrain v5 WITH the market sell fix for correct economics
