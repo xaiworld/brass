@@ -1,0 +1,96 @@
+# Brass: Lancashire — Project Context
+
+## Overview
+Web-based implementation of the board game "Brass: Lancashire" for multiplayer remote play. Built by user "xai" over 144+ versions.
+
+## Tech Stack
+- **Server**: Node.js/Express, EJS templates, session-file-store (1-year TTL)
+- **Database**: JSON file-based (`data/db.json`) with atomic writes
+- **Frontend**: SVG board rendering, vanilla JS, no frameworks
+- **Deployment**: Render.com with persistent disk at `/data`
+- **Repo**: https://github.com/xaiworld/brass
+
+## Key Architecture
+- `server.js` — Express entry point, binds 0.0.0.0
+- `lib/game-engine.js` — Core game logic (~900 lines), all 6 action types + Wild Build
+- `lib/board-data.js` — Board topology: 19 locations, 6 non-buildable, 35+ links
+- `lib/industry-data.js` — Tile definitions matching physical game
+- `lib/card-data.js` — 66-card deck, 2-player deck variant
+- `lib/game-setup.js` — State initialization, era transitions, 2/3/4 player support
+- `lib/scoring.js` — Canal and rail era scoring
+- `lib/bot-engine.js` — Bot turn execution, strategy selection (NN > DRL > heuristic)
+- `lib/bot-strategies.js` — DRL bots with 44 features, ValidActionGenerator
+- `lib/nn-inference.js` — Pure JS neural network inference (loads nn-weights.json)
+- `lib/nn-weights.json` — Trained BrassNetV2 weights (~30MB)
+- `lib/notifications.js` — Web Push notifications (VAPID-based)
+- `lib/db.js` — JSON database with users, games, states, history, push subscriptions
+- `lib/version.js` — APP_VERSION and GAME_STATE_VERSION
+
+### Client-side
+- `public/js/board-renderer.js` — SVG rendering with draggable panels, industry icons
+- `public/js/game-ui.js` — Game UI controller, floating hand, turn navigator, VP breakdown
+- `public/js/board-data-client.js` — Client board data, player colors, industry images
+- `public/css/style.css` — Full styling with mobile support (`.is-mobile` class)
+
+### Routes
+- `routes/lobby-routes.js` — Game creation, invites, bot tiers, quick games
+- `routes/game-routes.js` — Game state API, action submission, history
+- `routes/auth-routes.js` — Admin-only user creation, first-login password setup
+
+## Game Features
+- Full Brass: Lancashire rules (canal/rail eras, markets, scoring, income track)
+- 2/3/4 player support (2P has reduced board, deck, markets)
+- AI bots: Neural Network (BrassNetV2), DRL (parameterized), Heuristic fallback
+- Bot tiers: Pro (temp=0.05), Average (temp=0.4), Noob (temp=1.0)
+- SVG board with draggable/resizable panels, industry icon images
+- Per-user node position persistence
+- Server-side state history for full game replay
+- Web Push Notifications (turn, start, finish, invite)
+- Mobile-friendly: bottom tab bar, live DOM panels, touch-optimized
+- In-game wiki with rules and strategy
+
+## 2-Player Mode
+Removed locations: Birkenhead, Ellesmere Port, Stockport, Macclesfield, Oldham, Rochdale. No Midlands external port. Yorkshire only from Colne. Lancaster-Scotland canal link added. Starting money £25, 6-slot markets (£2/2/3/3/4/4), 7 distant market tiles. Canal removes 2 cards, rail removes 0.
+
+## Mobile UI
+Detection: user-agent + touch + width <= 768px → `is-mobile` class on body. Early detection script runs before BoardRenderer.init(). Game page uses bottom tab bar (Info/Board/Hand/Actions/Log). Real DOM panels moved into overlay divs (not cloned). Floating hand always visible on Board tab with horizontal scroll. Turn nav fixed between hand and tabs. Market panels use MARKET_MOBILE positions on mobile.
+
+## Neural Network Bot Training
+Located in `training/` directory (Python + PyTorch):
+- `game_engine.py` — Python port of game engine for fast self-play
+- `neural_net_v2.py` — BrassNetV2: 2.4M params, 3 residual blocks, 512-dim hidden
+  - State encoding: 1145 features (board, links, players, hand, strategy)
+  - Action encoding: 35 features per action
+  - Value head: predicts normalized VP
+  - Action scorer: scores each valid action
+  - MCTS implementation (broken — returns VP=3, needs fixing)
+- `train_v3.py` — Current training: resume from v2 checkpoint, reward shaping, cyclic LR
+- Best greedy eval: MaxVP=69.5, AvgVP=59.5 (v3 iter 225)
+- Human-level target: 80-150+ VP
+
+### Training Status
+- v1: 100 iterations, MaxVP=60.6 (basic network, 463K params)
+- v2: 500 iterations, MaxVP=67.8 (residual blocks, 2.4M params)
+- v3: IN PROGRESS — 500 iterations resuming from v2, reward shaping, MaxVP=69.5 so far
+- Checkpoints saved in `training/checkpoint_v3_*.pt`
+- Weights exported to `lib/nn-weights.json` for Node.js inference
+
+### Key Training Issues to Fix
+1. Python game engine produces lower VPs than Node.js engine — subtle rule differences
+2. MCTS is broken (returns VP=3) — action application on copies fails
+3. Too few sells generated — connectivity/selling mechanics need debugging
+4. Need more training iterations and potentially curriculum learning
+
+## User Preferences
+- User "xai" is the admin account
+- Push changes frequently, iterate locally until satisfied
+- Prefers terse responses, direct action
+- Wants bots to reach human-level play (80-150+ VP)
+- Mobile UX is important (friends play on phones)
+- nodemon.json ignores data/ directory to prevent restart loops
+
+## Development Notes
+- `npm start` or `node server.js` to run locally on port 3000
+- Training: `python3 -u training/train_v3.py` (runs ~5 hours for 500 iterations)
+- Weights export: training scripts save to `training/best_v3.json`, copy to `lib/nn-weights.json`
+- Version bump in `lib/version.js` before each push
