@@ -4,7 +4,7 @@ description: Neural network bot training status and next steps — Python traini
 type: project
 ---
 
-**Current state (2026-03-27):** v3 training running (500 iters from v2 checkpoint). Best eval: MaxVP=69.5. Target: 80-150+ VP (human level).
+**Current state (2026-03-27):** v3 training COMPLETE. Best eval: MaxVP=73.3, AvgVP=63.4. Deployed as v0.0.145. Target: 80-150+ VP (human level). Checkpoint: training/checkpoint_v3_500.pt
 
 **Architecture:** BrassNetV2 — 2.4M params, 3 residual blocks of 512-dim, LayerNorm. Value head (predict VP) + Action scorer (rank valid actions). Pure JS inference in Node.js via lib/nn-inference.js.
 
